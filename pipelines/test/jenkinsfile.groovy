@@ -24,19 +24,24 @@ pipelineJob('MyPipelineJob') {
         stringParam('PARAM_NAME', 'default_value', 'Description of parameter')
     }
 
-    definitionScript("""
-        pipeline {
-            agent any
-            stages {
-                stage('Build') {
-                    steps {
-                        script {
-                            cleanWs()
-                            sh 'echo hello world!'
+    definition {
+        cps {
+            script("""
+                pipeline {
+                    agent any
+                    stages {
+                        stage('Build') {
+                            steps {
+                                script {
+                                    cleanWs()
+                                    sh 'echo hello world!'
+                                }
+                            }
                         }
+                        // Add more stages as needed
                     }
                 }
-            }
+            """)
         }
-    """)
+    }
 }
