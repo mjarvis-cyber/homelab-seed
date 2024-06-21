@@ -1,0 +1,13 @@
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y \
+    qemu-utils \
+    wget \
+    jq
+
+RUN pip install requests
+
+COPY . /app
+WORKDIR /app
+
+CMD ["python", "main.py"]

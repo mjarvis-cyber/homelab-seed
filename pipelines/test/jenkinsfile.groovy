@@ -1,4 +1,4 @@
-pipelineJob('MyPipelineJob') {
+pipelineJob('TestPipeline') {
     displayName('Test pipeline for DSL')
     description('Test pipeline for DSL')
 
