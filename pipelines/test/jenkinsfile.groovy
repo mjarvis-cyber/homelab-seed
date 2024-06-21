@@ -1,16 +1,27 @@
-pipeline {
+job('MyPipelineJob') {
+    displayName('Test pipeline for DSL')
+    description('Test pipeline for DSL')
 
-    agent {
-        label 'controller'
+    scm {
+        git {
+            remote {
+                url('https://github.com/your/repository.git')
+            }
+            branch('master')
+        }
     }
 
 
-    stages {
-        stage('Init seed') {
+    triggers {
+        cron('H * * * *')
+    }
+
+    steps {
+        stage('Test step') {
             steps {
                 script {
                     cleanWs()
-                    sh "echo hello world!"
+                    sh 'echo hello world!'
                 }
             }
         }
