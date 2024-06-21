@@ -20,8 +20,6 @@ pipelineJob('MyPipelineJob') {
         cron('H * * * *')
     }
 
-    concurrentBuild(false)
-
     parameters {
         stringParam('PARAM_NAME', 'default_value', 'Description of parameter')
     }
