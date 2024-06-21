@@ -15,13 +15,15 @@ job('MyPipelineJob') {
     triggers {
         cron('H * * * *')
     }
-
-    steps {
-        stage('Test step') {
-            steps {
-                script {
-                    cleanWs()
-                    sh 'echo hello world!'
+    pipeline {
+        agent any
+        steps {
+            stage('Test step') {
+                steps {
+                    script {
+                        cleanWs()
+                        sh 'echo hello world!'
+                    }
                 }
             }
         }
