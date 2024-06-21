@@ -1,31 +1,44 @@
-job('MyPipelineJob') {
+pipelineJob('MyPipelineJob') {
     displayName('Test pipeline for DSL')
     description('Test pipeline for DSL')
 
-    scm {
-        git {
-            remote {
-                url('https://github.com/your/repository.git')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote {
+                        url('https://github.com/OrangeSquirter/homelab-seed.git')
+                    }
+                    branch('master')
+                }
             }
-            branch('master')
+            scriptPath('pipelines/test/jenkinsfile.groovy')
         }
     }
-
 
     triggers {
         cron('H * * * *')
     }
-    pipeline {
-        agent any
-        steps {
-            stage('Test step') {
-                steps {
-                    script {
-                        cleanWs()
-                        sh 'echo hello world!'
+
+    concurrentBuild(false)
+
+    parameters {
+        stringParam('PARAM_NAME', 'default_value', 'Description of parameter')
+    }
+
+    definitionScript("""
+        pipeline {
+            agent any
+            stages {
+                stage('Build') {
+                    steps {
+                        script {
+                            cleanWs()
+                            sh 'echo hello world!'
+                        }
                     }
                 }
             }
         }
-    }
+    """)
 }
