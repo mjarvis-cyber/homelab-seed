@@ -1,18 +1,28 @@
-pipelineJob('template-creator') {
-    displayName('Template Creator')
-    description('Generate ProxMox templates')
-
-    definition {
-        cpsScm {
-            scm {
-                git {
-                    remote {
-                        url('https://github.com/OrangeSquirter/homelab-seed.git')
+pipeline {
+    agent {
+        dockerfile {
+            filename 'pipelines/template-creator/Dockerfile'
+        }
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/master']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    userRemoteConfigs: [[url: 'https://github.com/OrangeSquirter/homelab-seed.git']]
+                ])
+            }
+        }
+        stage('Build Templates') {
+            steps {
+                script {
+                    dir('pipelines/template-creator') {
+                        sh 'python template-creator.py'
                     }
-                    branch('master')
                 }
             }
-            scriptPath('pipelines/template-creator/jenkinsfile.groovy')
         }
     }
 }

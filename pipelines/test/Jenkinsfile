@@ -1,18 +1,13 @@
-pipelineJob('TestPipeline') {
-    displayName('Test Pipeline')
-    description('Test pipeline for DSL')
-
-    definition {
-        cpsScm {
-            scm {
-                git {
-                    remote {
-                        url('https://github.com/OrangeSquirter/homelab-seed.git')
-                    }
-                    branch('master')
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+             steps {
+                script {
+                    cleanWs()
+                        sh 'echo hello world!'
                 }
             }
-            scriptPath('pipelines/test/jenkinsfile.groovy')
         }
     }
 }
