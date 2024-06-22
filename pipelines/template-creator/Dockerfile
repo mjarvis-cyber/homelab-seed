@@ -4,7 +4,8 @@ RUN apt-get update && apt-get install -y \
     qemu-utils \
     jq
 
-RUN pip install paramiko \
+RUN pip install cryptography \
+    paramiko \
     requests \
     scp
 

@@ -1,3 +1,5 @@
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
 import requests
 import json
 import argparse
@@ -63,6 +65,25 @@ def put_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret)
     else:
         response.raise_for_status()
 
+def generate_public_key(private_key_path, public_key_path):
+    with open(private_key_path, "rb") as key_file:
+        private_key = serialization.load_pem_private_key(
+            key_file.read(),
+            password=None,
+            backend=default_backend()
+        )
+    
+    public_key = private_key.public_key().public_bytes(
+        serialization.Encoding.OpenSSH,
+        serialization.PublicFormat.OpenSSH
+    )
+    
+    with open(public_key_path, 'w') as pub_key_file:
+        pub_key_file.write(public_key.decode('utf-8'))
+    
+    print(f"Public key written to {public_key_path}")
+    return public_key
+
 def get_vm_metadata(proxmox_ip, token_name, token_secret):
     vm_data = {}
     vmids = get_cluster_query_output("api2/json/cluster/resources", proxmox_ip, token_name, token_secret)["data"]
@@ -125,29 +146,48 @@ def configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     data=f"scsihw=virtio-scsi-pci&virtio0=local-lvm:vm-{vmid}-disk-0&serial0=socket&boot=c&bootdisk=virtio0"
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
+def configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, public_key):
+    endpoint=f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
+    data=f"agent=1&ide2=local-lvm:cloudinit&sshkeys={public_key}&ipconfig0=ip=dhcp&ciuser={user}&cipassword={password}"
+    put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
+
 def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
     endpoint=f"api2/json/nodes/{proxmox_node}/qemu"
     data=f"vmid={vmid}&name={name}&cores=2&memory=2048&onboot=1&vga=qxl&hotplug=disk,network,usb"
     post_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
-def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_url, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use):
+def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_url, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key):
     remote_dir="/root/qcows"
     qcow_file = f"{qcow_dir}/{name}.qcow2"
+    public_key_path=f"{private_key_path}.pub"
+
+    print("Generate public key from private key")
+    public_key = generate_public_key(private_key_path, public_key_path)
+    print(f"Generated public key: {public_key}")
+
     print(f"Getting cloud image from {image_url} and placing in {qcow_file}")
     get_qcow(image_url, qcow_dir, qcow_file, name)
+
     print(f"Creating VM {name} with VMID: {vmid}")
     create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name)
+
     print(f"Uploading {qcow_file} to proxmox")
     print("Uploading the qcow, this could take a while")
     upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir, vmid, name)
     time.sleep(15)
+
     print("Configuring disk on template")
     configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
-def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use):
+    print("Configuring cloud-init")
+    configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, public_key)
+
+
+
+def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key):
     vmid = pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end)
     print(f"Here is the vmid to use: {vmid}")
-    vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_location, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use)
+    vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_location, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
@@ -157,6 +197,7 @@ def main():
     parser.add_argument("--token_secret", required=True, help="Proxmox API token secret")
     parser.add_argument("--user", required=True, help="Proxmox SSH user")
     parser.add_argument("--password", required=True, help="Proxmox SSH password")
+    parser.add_argument("--template_ssh_key", required=True, help="Path to the private SSH key")
 
     args = parser.parse_args()
 
@@ -166,6 +207,7 @@ def main():
     token_secret = args.token_secret
     proxmox_user = args.user
     proxmox_password = args.password
+    template_ssh_key = args.template_ssh_key
 
     with open("configs.json", "r") as file:
         config = json.load(file)
@@ -191,7 +233,8 @@ def main():
             template['password'],
             proxmox_user,
             proxmox_password,
-            config['temporary_ip']
+            config['temporary_ip'],
+            template_ssh_key
         )
 
 if __name__ == "__main__":
