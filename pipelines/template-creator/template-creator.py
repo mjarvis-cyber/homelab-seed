@@ -186,6 +186,7 @@ def configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     sshKey = quote(public_keys, safe='')
     data={}
     data["sshkeys"] = sshKey
+    data["ipconfig0"]="ip=dhcp"
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
@@ -199,7 +200,15 @@ def make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
 
 def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
     endpoint=f"api2/json/nodes/{proxmox_node}/qemu"
-    data=f"vmid={vmid}&name={name}&cores=2&memory=2048&onboot=1&vga=qxl&hotplug=disk,network,usb"
+    data={}
+    data["vmid"]=vmid
+    data["name"]=name
+    data["cores"]="2"
+    data["memory"]="2048"
+    data["net0"]="virtio,bridge=vmbr0"
+    data["onboot"]="1"
+    data["vga"]="qxl"
+    data["hotplug"]="disk,network,usb"
     post_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_url, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key):
