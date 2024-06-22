@@ -1,0 +1,24 @@
+pipelineJob('template-creator') {
+    displayName('Template Creator')
+    description('Generate ProxMox templates')
+
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote {
+                        url('https://github.com/OrangeSquirter/homelab-seed.git')
+                    }
+                    branch('master')
+                }
+            }
+            scriptPath('pipelines/template-creator/jenkinsfile.groovy')
+        }
+    }
+    triggers {
+        cron('H * * * *')
+    }
+    parameters {
+        stringParam('GIT_CREDENTIALS_ID', '', 'ID of the Git credentials stored in Jenkins')
+    }
+}
