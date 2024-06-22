@@ -239,10 +239,6 @@ def main():
     template_ssh_key = args.template_ssh_key
     print(f"The ssh key: {template_ssh_key}")
 
-    ssh_key_file_path = f"{template_name}-keys"
-    with open(ssh_key_file_path, "w") as key_file:
-        key_file.write(template_ssh_key)
-
     with open("configs.json", "r") as file:
         config = json.load(file)
 
