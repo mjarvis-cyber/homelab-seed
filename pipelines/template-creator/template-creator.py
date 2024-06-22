@@ -65,8 +65,8 @@ def put_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret)
     else:
         response.raise_for_status()
 
-def generate_public_key(private_key_path, public_key_path):
-    with open(private_key_path, "rb") as key_file:
+def generate_public_key(template_ssh_key, public_key_path):
+    with open(template_ssh_key, "rb") as key_file:
         private_key = serialization.load_pem_private_key(
             key_file.read(),
             password=None,
@@ -159,10 +159,10 @@ def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
 def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_url, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key):
     remote_dir="/root/qcows"
     qcow_file = f"{qcow_dir}/{name}.qcow2"
-    public_key_path=f"{private_key_path}.pub"
+    public_key_path=f"{template_ssh_key}.pub"
 
     print("Generate public key from private key")
-    public_key = generate_public_key(private_key_path, public_key_path)
+    public_key = generate_public_key(template_ssh_key, public_key_path)
     print(f"Generated public key: {public_key}")
 
     print(f"Getting cloud image from {image_url} and placing in {qcow_file}")
