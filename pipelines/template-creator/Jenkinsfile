@@ -23,6 +23,7 @@ pipeline {
                 ])
             }
         }
+        
         stage('Build Templates') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key', keyFileVariable: 'SSH_KEY')]) {
@@ -32,7 +33,7 @@ pipeline {
                             def token_secret = PROXMOX_API_CREDS.split(':')[1]
                             def proxmox_user = PROXMOX_SSH_CREDS.split(':')[0]
                             def proxmox_password = PROXMOX_SSH_CREDS.split(':')[1]
-                            def template_ssh_key = env.SSH_KEY
+                            def template_ssh_key = "${SSH_KEY}"
 
                             sh """
                                 python template-creator.py \
