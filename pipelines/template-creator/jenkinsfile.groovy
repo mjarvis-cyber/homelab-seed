@@ -1,7 +1,7 @@
 pipeline {
     agent {
         dockerfile {
-            filename 'Dockerfile'
+            filename 'pipelines/template-creator/Dockerfile'
         }
     }
     stages {
