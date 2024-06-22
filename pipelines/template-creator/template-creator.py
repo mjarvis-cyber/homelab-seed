@@ -195,15 +195,16 @@ def configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def configure_custom(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, ssh_key_file, ip_to_use):
-    print(f"Setting IP to {ip_to_use} temporarily")
+    ip_address = input_string.split('/')[0]
+    print(f"Setting IP to {ip_address} temporarily")
     data={}
-    data["ipconfig0"]=ip_to_use
+    data["ipconfig0"]=f"ip={ip_to_use}"
     endpoint = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
     start_endpoint=f"/api2/json/nodes/{proxmox+node}/qemu/{vmid}/status/start"
     put_cluster_query(cluster_query=endpoint, data=None, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
     time.sleep(180)
-    ssh = create_ssh_client(proxmox_ip, 22, user, key_file=ssh_key_file)
+    ssh = create_ssh_client(ip_address, 22, user, key_file=ssh_key_file)
     scp = SCPClient(ssh.get_transport())
 
     remote_dir="/bootstrap"
