@@ -2,6 +2,7 @@ import requests
 import json
 import argparse
 import os
+import shutil
 
 def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret):
     api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
@@ -45,9 +46,9 @@ def get_qcow(image_url, qcow_dir, qcow_file, name):
         for chunk in response.iter_content(chunk_size=8192):
             file.write(chunk)
 
-    os.rename(qcow_path, qcow_file)
+    shutil.move(qcow_path, qcow_file)
 
-    os.system(f"qemu-img resize {qcow_file} 20G")
+    os.system(f"qemu-img resize {qcow_file} 32G")
 
 def vm_creation_pipeline(vmid, name, image_url, ssh_keys, qcow_dir, user, password, ip_to_use):
     qcow_file = f"{qcow_dir}/{name}.qcow2"
