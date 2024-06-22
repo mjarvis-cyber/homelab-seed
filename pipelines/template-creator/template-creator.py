@@ -55,7 +55,7 @@ def runner(resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, i
     template_resource_pool(vmid, resource_pool_name)
 
 def main():
-    with open("config.json", "r") as file:
+    with open("configs.json", "r") as file:
         config = json.load(file)
 
     for template_name, template in config['templates'].items():
