@@ -5,6 +5,7 @@ import os
 import shutil
 import paramiko
 from scp import SCPClient
+import uuid
 
 def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret):
     api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
@@ -102,7 +103,9 @@ def create_ssh_client(server, port, user, password):
     client.connect(server, port, user, password)
     return client
 
-def upload_qcow(proxmox_ip, proxmox_node, user, password, qcow_file, remote_dir):
+def upload_qcow(proxmox_ip, proxmox_node, user, password, qcow_file, remote_dir, vmid):
+    temp_uuid=uuid.uuid4()
+    temp_filename=f"{remote_dir}/{temp_uuid}.qcow2"
     ssh = create_ssh_client(proxmox_ip, 22, user, password)
     scp = SCPClient(ssh.get_transport())
     
@@ -112,9 +115,15 @@ def upload_qcow(proxmox_ip, proxmox_node, user, password, qcow_file, remote_dir)
         print(f"Failed to create directory {remote_dir} on {proxmox_ip}")
         return
     
-    scp.put(qcow_file, remote_path=remote_dir)
+    scp.put(qcow_file, remote_path=remote_dir/temp.qcow2)
+    ssh.exec_command(f"qm importdisk {vmid} {temp_filename} local-lvm")
     scp.close()
     ssh.close()
+
+def configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
+    endpoint=f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
+    data=f"scsihw=virtio-scsi-pci&virtio0=local-lvm:vm-{vmid}-disk-0&serial0=socket&boot=c&bootdisk=virtio0"
+    put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
     endpoint=f"api2/json/nodes/{proxmox_node}/qemu"
@@ -126,10 +135,11 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     qcow_file = f"{qcow_dir}/{name}.qcow2"
     print(f"Getting cloud image from {image_url} and placing in {qcow_file}")
     get_qcow(image_url, qcow_dir, qcow_file, name)
-    print(f"Uploading {qcow_file} to proxmox")
-    upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir)
     print(f"Creating VM {name} with VMID: {vmid}")
     create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name)
+    print(f"Uploading {qcow_file} to proxmox")
+    upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir, vmid)
+    configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
 def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use):
     vmid = pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end)
