@@ -195,7 +195,7 @@ def configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def configure_custom(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, ssh_key_file, ip_to_use):
-    ip_address = input_string.split('/')[0]
+    ip_address = ip_to_use.split('/')[0]
     print(f"Setting IP to {ip_address} temporarily")
     data={}
     data["ipconfig0"]=f"ip={ip_to_use}"
