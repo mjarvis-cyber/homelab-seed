@@ -65,16 +65,25 @@ def put_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret)
     else:
         response.raise_for_status()
 
-def generate_public_key(private_key, public_key_path):
+def generate_public_key(private_key_path, public_key_path):
     try:
-        print("Private Key Data:")
-        print(private_key)
+        with open(private_key_path, "rb") as key_file:
+            private_key = serialization.load_pem_private_key(
+                key_file.read(),
+                password=None,
+                backend=default_backend()
+            )
     
-        private_key = serialization.load_pem_private_key(private_key, password=None)
-        public_key = private_key.public_key()
-        public_openssh = public_key.public_bytes(encoding=serialization.Encoding.OpenSSH, format=serialization.PublicFormat.OpenSSH )
+        public_key = private_key.public_key().public_bytes(
+            serialization.Encoding.OpenSSH,
+            serialization.PublicFormat.OpenSSH
+        )
     
-        return public_openssh
+        with open(public_key_path, 'w') as pub_key_file:
+            pub_key_file.write(public_key.decode('utf-8'))
+    
+        print(f"Public key written to {public_key_path}")
+        return public_key
     except Exception as e:
         print(f"Error loading private key: {e}")
         raise
@@ -204,6 +213,10 @@ def main():
     proxmox_password = args.password
     template_ssh_key = args.template_ssh_key
     print(f"The ssh key: {template_ssh_key}")
+
+    ssh_key_file_path = "/tmp/template_ssh_key"
+        with open(ssh_key_file_path, "w") as key_file:
+            key_file.write(template_ssh_key)
 
     with open("configs.json", "r") as file:
         config = json.load(file)
