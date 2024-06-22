@@ -68,8 +68,12 @@ def put_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret)
 def generate_public_key(private_key_path, public_key_path):
     try:
         with open(private_key_path, "rb") as key_file:
+            private_key_data = key_file.read()
+            print(f"Private Key (start): {private_key_data[:30]}")
+            print(f"Private Key (end): {private_key_data[-30:]}")
+
             private_key = serialization.load_pem_private_key(
-                key_file.read(),
+                private_key_data,
                 password=None,
                 backend=default_backend()
             )
