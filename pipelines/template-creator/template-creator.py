@@ -202,7 +202,7 @@ def configure_custom(proxmox_ip, proxmox_node, token_name, token_secret, vmid, u
     endpoint = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
     start_endpoint=f"/api2/json/nodes/{proxmox_node}/qemu/{vmid}/status/start"
-    put_cluster_query(cluster_query=start_endpoint, data=None, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
+    post_cluster_query(cluster_query=start_endpoint, data=None, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
     time.sleep(180)
     ssh = create_ssh_client(ip_address, 22, user, key_file=ssh_key_file)
     scp = SCPClient(ssh.get_transport())
