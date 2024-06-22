@@ -133,7 +133,7 @@ def main():
 
         runner(
             proxmox_ip,
-            proxmox_npde,
+            proxmox_node,
             token_name,
             token_secret,
             config['resource_pool'],
