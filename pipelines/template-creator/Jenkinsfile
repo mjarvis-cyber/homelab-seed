@@ -4,6 +4,11 @@ pipeline {
             filename 'pipelines/template-creator/Dockerfile'
         }
     }
+    parameters {
+        string(name: 'PROXMOX_USERNAME', defaultValue: 'root', description: 'The username to authenticate to proxmox as')
+        string(name: 'PROXMOX_PASSWORD', defaultValue: '', description: 'The password to authenticate to proxmox with')
+        string(name: 'PROXMOX_HOST', defaultValue: '', description: 'Override hosts for Ansible playbook')
+    }
     stages {
         stage('Checkout') {
             steps {
@@ -13,6 +18,54 @@ pipeline {
                     extensions: [],
                     userRemoteConfigs: [[url: 'https://github.com/OrangeSquirter/homelab-seed.git']]
                 ])
+            }
+        }
+        stage('Generate API Credentials') {
+            steps {
+                script {
+                    def credentialsId = 'proxmox-api-credentials'
+                    def credentials = null
+
+                    withCredentials([string(credentialsId: credentialsId, variable: 'existingCredentials')]) {
+                        credentials = existingCredentials
+                    }
+
+                    if (credentials == null || credentials.isEmpty()) {
+                        echo "API credentials not found, generating new credentials."
+                        dir('pipelines/template-creator') {
+                            sh """
+                                python generate_proxmox_api_credentials.py --username ${params.PROXMOX_USERNAME} --password ${params.PROXMOX_PASSWORD} --host ${params.PROXMOX_HOST}
+                            """
+                        }
+
+                        def proxmoxCredentials = readFile('proxmox_credentials.json')
+                        def proxmoxCredentialsJson = readJSON(text: proxmoxCredentials)
+                        def ticket = proxmoxCredentialsJson.ticket
+                        def csrfToken = proxmoxCredentialsJson.csrf_token
+
+                        sh """
+                            echo '{"ticket": "${ticket}", "csrf_token": "${csrfToken}"}' > /tmp/proxmox_credentials.json
+                        """
+                        withCredentials([usernamePassword(credentialsId: 'jenkins-api', usernameVariable: 'JENKINS_USERNAME', passwordVariable: 'JENKINS_PASSWORD')]) {
+                            sh """
+                                curl -X POST http://localhost:8080/credentials/store/system/domain/_/createCredentials \
+                                --user ${JENKINS_USERNAME}:${JENKINS_PASSWORD} \
+                                --data-urlencode 'json={
+                                  "": "0",
+                                  "credentials": {
+                                    "scope": "GLOBAL",
+                                    "id": "${credentialsId}",
+                                    "secret": "/tmp/proxmox_credentials.json",
+                                    "description": "Proxmox API credentials",
+                                    "$class": "org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl"
+                                  }
+                                }'
+                            """
+                        }
+                    } else {
+                        echo "Using existing API credentials."
+                    }
+                }
             }
         }
         stage('Build Templates') {
