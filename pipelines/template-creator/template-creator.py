@@ -120,6 +120,7 @@ def main():
     args = parser.parse_args()
 
     proxmox_ip = args.proxmox_ip
+    proxmox_node = args.proxmox_node
     token_name = args.token_name
     token_secret = args.token_secret
 
