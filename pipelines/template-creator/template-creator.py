@@ -95,7 +95,7 @@ def get_qcow(image_url, qcow_dir, qcow_file, name):
 
 def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
     endpoint=f"api2/json/nodes/{proxmox_node}/qemu"
-    data=f"vmid={vmid}&name={name}&full=1"
+    data=f"vmid={vmid}&name={name}"
     post_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_url, ssh_keys, qcow_dir, user, password, ip_to_use):
