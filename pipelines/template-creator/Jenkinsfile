@@ -8,6 +8,9 @@ pipeline {
         string(name: 'PROXMOX_USERNAME', defaultValue: 'root@pam', description: 'The username to authenticate to proxmox as')
         password(name: 'PROXMOX_PASSWORD', description: 'The password to authenticate to proxmox with')
         string(name: 'PROXMOX_HOST', defaultValue: 'cyberops2.pizzasec.com', description: 'ProxMox host https endpoint')
+        string(name: 'JENKINS_URL', defaultValue: 'http://jenkins.pizzasec.com:8080', description: 'Jenkins base URL')
+        string(name: 'JENKINS_USERNAME', defaultValue: 'admin', description: 'Jenkins username')
+        password(name: 'JENKINS_PASSWORD',  description: 'Jenkins password')
     }
     stages {
         stage('Checkout') {
@@ -20,57 +23,20 @@ pipeline {
                 ])
             }
         }
-        stage('Generate API Credentials') {
+        stage('Get API Creds') {
             steps {
                 script {
-                    def credentialsId = 'proxmox-api-credentials'
-                    def credentials = null
-
-                    try {
-                        withCredentials([string(credentialsId: credentialsId, variable: 'existingCredentials')]) {
-                            credentials = existingCredentials
-                        }
-                    } catch (Exception e) {
-                        echo "Credentials not found: ${e.message}"
-                    }
-
-                    if (credentials == null || credentials.isEmpty()) {
-                        echo "API credentials not found, generating new credentials."
-                        dir('pipelines/template-creator') {
-                            sh """
-                                python generate_proxmox_api_credentials.py --username ${params.PROXMOX_USERNAME} --password ${params.PROXMOX_PASSWORD} --host ${params.PROXMOX_HOST}
-                            """
-
-                            def proxmoxCredentials = readFile('proxmox_credentials.json')
-                            def proxmoxCredentialsJson = readJSON(text: proxmoxCredentials)
-                            def ticket = proxmoxCredentialsJson.ticket
-                            def csrfToken = proxmoxCredentialsJson.csrf_token
-
-                            def credentialsJson = [
-                                "": "0",
-                                "credentials": [
-                                    "scope": "GLOBAL",
-                                    "id": "${credentialsId}",
-                                    "username": "${ticket}",
-                                    "password": csrfToken,
-                                    "description": "Proxmox API credentials",
-                                    "stapler-class": "org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl"
-                                ]
-                            ]
-
-                            withCredentials([usernamePassword(credentialsId: '', usernameVariable: 'JENKINS_USERNAME', passwordVariable: 'JENKINS_PASSWORD', credentialsIdVariable: 'CREDENTIALS_ID')]) {
-                                script {
-                                    def creds = Jenkins.instance.getDescriptor('com.cloudbees.plugins.credentials.SystemCredentialsProvider').getCredentials(com.cloudbees.plugins.credentials.Credentials.class).findAll {
-                                        it.id == "${credentialsId}"
-                                    }
-                                    if (creds.isEmpty()) {
-                                        Jenkins.instance.getDescriptor('com.cloudbees.plugins.credentials.SystemCredentialsProvider').getStore().addCredentials(com.cloudbees.plugins.credentials.domains.Domain.global(), new org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl(org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImplScope.GLOBAL, credentialsId, "Proxmox API credentials", Secret.fromString(proxmoxCredentialsJson)))
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        echo "Using existing API credentials."
+                    dir('pipelines/template-creator') {
+                        sh """
+                            python generate_and_add_credentials.py \\
+                            --username '${params.PROXMOX_USERNAME}' \\
+                            --password '${params.PROXMOX_PASSWORD}' \\
+                            --host '${params.PROXMOX_HOST}' \\
+                            --credentials-id 'proxmox-api-credentials' \\
+                            --jenkins-url '${params.JENKINS_URL}' \\
+                            --jenkins-username '${params.JENKINS_USERNAME}' \\
+                            --jenkins-password '${params.JENKINS_PASSWORD}'
+                        """
                     }
                 }
             }
