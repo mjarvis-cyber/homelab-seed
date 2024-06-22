@@ -1,5 +1,5 @@
 pipelineJob('TestPipeline') {
-    displayName('Test pipeline for DSL')
+    displayName('Test Pipeline')
     description('Test pipeline for DSL')
 
     definition {
@@ -14,13 +14,5 @@ pipelineJob('TestPipeline') {
             }
             scriptPath('pipelines/test/jenkinsfile.groovy')
         }
-    }
-
-    triggers {
-        cron('H * * * *')
-    }
-
-    parameters {
-        stringParam('PARAM_NAME', 'default_value', 'Description of parameter')
     }
 }

@@ -15,10 +15,4 @@ pipelineJob('template-creator') {
             scriptPath('pipelines/template-creator/jenkinsfile.groovy')
         }
     }
-    triggers {
-        cron('H * * * *')
-    }
-    parameters {
-        stringParam('GIT_CREDENTIALS_ID', '', 'ID of the Git credentials stored in Jenkins')
-    }
 }
