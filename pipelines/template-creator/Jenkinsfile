@@ -28,7 +28,7 @@ pipeline {
                 script {
                     dir('pipelines/template-creator') {
                         sh """
-                            python generate_and_add_credentials.py \\
+                            python generate_proxmox_api_credentials.py \\
                             --username '${params.PROXMOX_USERNAME}' \\
                             --password '${params.PROXMOX_PASSWORD}' \\
                             --host '${params.PROXMOX_HOST}' \\
