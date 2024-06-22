@@ -140,11 +140,16 @@ def get_qcow(image_url, qcow_dir, qcow_file, name):
     print(f"Moving {qcow_path} to {qcow_dir}")
     os.system(f"qemu-img resize {qcow_file} 20G")
 
-def create_ssh_client(server, port, user, password):
+def create_ssh_client(server, port, user, password=None, key_file=None):
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(server, port, user, password)
+    
+    if key_file:
+        client.connect(server, port, username=user, key_filename=key_file)
+    else:
+        client.connect(server, port, username=user, password=password)
+    
     return client
 
 def upload_qcow(proxmox_ip, proxmox_node, user, password, qcow_file, remote_dir, vmid, name):
@@ -189,6 +194,45 @@ def configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     data["ipconfig0"]="ip=dhcp"
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
+def configure_custom(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, ssh_key_file, ip_to_use):
+    print(f"Setting IP to {ip_to_use} temporarily")
+    data={}
+    data["ipconfig0"]=ip_to_use
+    endpoint = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
+    put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
+    start_endpoint=f"/api2/json/nodes/{proxmox+node}/qemu/{vmid}/status/start"
+    put_cluster_query(cluster_query=endpoint, data=None, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
+    time.sleep(180)
+    ssh = create_ssh_client(proxmox_ip, 22, user, key_file=ssh_key_file)
+    scp = SCPClient(ssh.get_transport())
+
+    remote_dir="/bootstrap"
+    remote_filename=f"{remote_dir}/init-image.sh"
+    stdin, stdout, stderr = ssh.exec_command(f'sudo mkdir -p {remote_dir}')
+    exit_status = stdout.channel.recv_exit_status()
+    if exit_status != 0:
+        print(f"Failed to create directory {remote_dir} on {ip_to_use}")
+        return
+    scp.put("init-image.sh", remote_path=remote_filename)
+    stdin, stdout, stderr = ssh.exec_command(f'sudo chmod +x {remote_filename} && sudo {remote_filename}')
+    exit_status = stdout.channel.recv_exit_status()
+    if exit_status != 0:
+        print(f"Failed to execute {remote_filename} on {ip_to_use}")
+        return
+    stdin, stdout, stderr = ssh.exec_command(f'sudo shutdown now')
+    exit_status = stdout.channel.recv_exit_status()
+    if exit_status != 0:
+        print(f"Failed to shut down")
+        return
+    time.sleep(10)
+
+def fix_networking(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
+    # After the image has been messed with a bit, we need to fix it
+    endpoint = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
+    data={}
+    data["ipconfig0"]="ip=dhcp"
+    put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
+
 def make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     endpoint = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/template"
     response = post_cluster_query(cluster_query=endpoint, data=None, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
@@ -228,14 +272,19 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     print(f"Uploading {qcow_file} to proxmox")
     print("Uploading the qcow, this could take a while")
     upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir, vmid, name)
-    time.sleep(15)
+    time.sleep(5)
     os.remove(qcow_file)
     print("Configuring disk on template")
     configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
     print("Configuring cloud-init")
     configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, ssh_keys)
-    time.sleep(15)
+    time.sleep(5)
+
+    print("Installing base configuration")
+    configure_custom(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, template_ssh_key, ip_to_use)
+    fix_networking(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
+
     print("Converting to template")
     make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
