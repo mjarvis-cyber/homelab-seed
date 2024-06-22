@@ -228,7 +228,7 @@ def configure_custom(proxmox_ip, proxmox_node, token_name, token_secret, vmid, u
     if exit_status != 0:
         print(f"Failed to shut down")
         return
-    time.sleep(10)
+    time.sleep(20)
 
 def fix_networking(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     # After the image has been messed with a bit, we need to fix it
