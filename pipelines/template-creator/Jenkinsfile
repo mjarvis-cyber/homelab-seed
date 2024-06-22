@@ -10,6 +10,7 @@ pipeline {
     }
     environment {
         PROXMOX_API_CREDS = credentials('proxmox-api-token')
+        PROXMOX_SSH_CREDS = credentials('root-proxmox')
     }
     stages {
         stage('Checkout') {
@@ -28,13 +29,17 @@ pipeline {
                     dir('pipelines/template-creator') {
                         def token_name = PROXMOX_API_CREDS.split(':')[0]
                         def token_secret = PROXMOX_API_CREDS.split(':')[1]
-                        
+                        def proxmox_user = PROXMOX_SSH_CREDS.split(':')[0]
+                        def proxmox_password = PROXMOX_SSH_CREDS.split(':')[1]
+
                         sh """
                             python template-creator.py \
                                 --proxmox_ip ${params.PROXMOX_IP} \
                                 --proxmox_node ${params.PROXMOX_NODE} \
                                 --token_name ${token_name} \
-                                --token_secret ${token_secret}
+                                --token_secret ${token_secret} \
+                                --user ${proxmox_user} \
+                                --password ${proxmox_password}
                         """
                     }
                 }

@@ -93,22 +93,46 @@ def get_qcow(image_url, qcow_dir, qcow_file, name):
     print(f"Moving {qcow_path} to {qcow_dir}")
     os.system(f"qemu-img resize {qcow_file} 20G")
 
+def create_ssh_client(server, port, user, password):
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(server, port, user, password)
+    return client
+
+def upload_qcow(proxmox_ip, proxmox_node, user, password, qcow_file, remote_dir):
+    ssh = create_ssh_client(proxmox_ip, 22, user, password)
+    scp = SCPClient(ssh.get_transport())
+    
+    stdin, stdout, stderr = ssh.exec_command(f'mkdir -p {remote_dir}')
+    exit_status = stdout.channel.recv_exit_status()
+    if exit_status != 0:
+        print(f"Failed to create directory {remote_dir} on {proxmox_ip}")
+        return
+    
+    scp.put(qcow_file, remote_path=remote_dir)
+    scp.close()
+    ssh.close()
+
 def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
     endpoint=f"api2/json/nodes/{proxmox_node}/qemu"
-    data=f"vmid={vmid}&name={name}"
+    data=f"vmid={vmid}&name={name}&cores=2&memory=2048&onboot=1&vga=qxl&hotplug=disk,network,usb"
     post_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
-def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_url, ssh_keys, qcow_dir, user, password, ip_to_use):
+def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_url, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use):
+    remote_dir="/root/qcows"
     qcow_file = f"{qcow_dir}/{name}.qcow2"
     print(f"Getting cloud image from {image_url} and placing in {qcow_file}")
     get_qcow(image_url, qcow_dir, qcow_file, name)
+    print(f"Uploading {qcow_file} to proxmox")
+    upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir)
     print(f"Creating VM {name} with VMID: {vmid}")
     create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name)
 
-def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, ip_to_use):
+def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use):
     vmid = pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end)
     print(f"Here is the vmid to use: {vmid}")
-    vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_location, ssh_keys, qcow_dir, user, password, ip_to_use)
+    vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_location, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
@@ -116,6 +140,8 @@ def main():
     parser.add_argument("--proxmox_node", required=True, help="Proxmox host to build the template on")
     parser.add_argument("--token_name", required=True, help="Proxmox API token name")
     parser.add_argument("--token_secret", required=True, help="Proxmox API token secret")
+    parser.add_argument("--user", required=True, help="Proxmox SSH user")
+    parser.add_argument("--password", required=True, help="Proxmox SSH password")
 
     args = parser.parse_args()
 
@@ -123,6 +149,8 @@ def main():
     proxmox_node = args.proxmox_node
     token_name = args.token_name
     token_secret = args.token_secret
+    proxmox_user = args.user
+    proxmox_password = args.password
 
     with open("configs.json", "r") as file:
         config = json.load(file)
@@ -146,6 +174,8 @@ def main():
             template['img_url'],
             template['user'],
             template['password'],
+            proxmox_user,
+            proxmox_password,
             config['temporary_ip']
         )
 
