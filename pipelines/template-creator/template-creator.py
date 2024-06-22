@@ -66,23 +66,31 @@ def put_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret)
         response.raise_for_status()
 
 def generate_public_key(template_ssh_key, public_key_path):
-    with open(template_ssh_key, "rb") as key_file:
-        private_key = serialization.load_pem_private_key(
-            key_file.read(),
-            password=None,
-            backend=default_backend()
+    try:
+        with open(template_ssh_key, "rb") as key_file:
+            key_data = key_file.read()
+            print("Private Key Data:")
+            print(key_data)
+            
+            private_key = serialization.load_pem_private_key(
+                key_data,
+                password=None,
+                backend=default_backend()
+            )
+    
+        public_key = private_key.public_key().public_bytes(
+            serialization.Encoding.OpenSSH,
+            serialization.PublicFormat.OpenSSH
         )
     
-    public_key = private_key.public_key().public_bytes(
-        serialization.Encoding.OpenSSH,
-        serialization.PublicFormat.OpenSSH
-    )
+        with open(public_key_path, 'w') as pub_key_file:
+            pub_key_file.write(public_key.decode('utf-8'))
     
-    with open(public_key_path, 'w') as pub_key_file:
-        pub_key_file.write(public_key.decode('utf-8'))
-    
-    print(f"Public key written to {public_key_path}")
-    return public_key
+        print(f"Public key written to {public_key_path}")
+        return public_key
+    except Exception as e:
+        print(f"Error loading private key: {e}")
+        raise
 
 def get_vm_metadata(proxmox_ip, token_name, token_secret):
     vm_data = {}
