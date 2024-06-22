@@ -9,6 +9,7 @@ import paramiko
 from scp import SCPClient
 import uuid
 import time
+import urllib.parse
 
 def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret):
     api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
@@ -93,8 +94,10 @@ def generate_public_key(private_key_path, public_key_path):
             serialization.PublicFormat.OpenSSH
         )
     
-        with open(public_key_path, 'w') as pub_key_file:
+        with open(public_key_path, 'a') as pub_key_file:
+            pub_key_file.write("\n")
             pub_key_file.write(public_key.decode('utf-8'))
+            pub_key_file.write("\n")
     
         print(f"Public key written to {public_key_path}")
         return public_key
@@ -165,8 +168,17 @@ def configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, public_key):
-    endpoint=f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
-    data=f"agent=1&ide2=local-lvm:cloudinit&sshkeys={public_key}&ipconfig0=ip=dhcp&ciuser={user}&cipassword={password}"
+    endpoint = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
+
+    with open(public_key_path, 'r') as file:
+        public_keys = file.read().strip()
+
+    data = f"agent=1&ide2=local-lvm:cloudinit&ciuser={user}&cipassword={password}"
+    put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
+    # ssh keys are weird to manage
+    sshKey = quote(public_keys, safe='')
+    data={}
+    data["sshkeys"] = sshKey
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
@@ -177,10 +189,9 @@ def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
 def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_url, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key):
     remote_dir="/root/qcows"
     qcow_file = f"{qcow_dir}/{name}.qcow2"
-    public_key_path=f"{name}-temp.pub"
 
     print("Generate public key from private key")
-    public_key = generate_public_key(template_ssh_key, public_key_path)
+    public_key = generate_public_key(template_ssh_key, ssh_keys)
     print(f"Generated public key: {public_key}")
 
     print(f"Getting cloud image from {image_url} and placing in {qcow_file}")
@@ -198,7 +209,7 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
     print("Configuring cloud-init")
-    configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, public_key)
+    configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, ssh_keys)
 
 
 
@@ -228,7 +239,7 @@ def main():
     template_ssh_key = args.template_ssh_key
     print(f"The ssh key: {template_ssh_key}")
 
-    ssh_key_file_path = "/tmp/template_ssh_key"
+    ssh_key_file_path = f"{template_name}-keys"
     with open(ssh_key_file_path, "w") as key_file:
         key_file.write(template_ssh_key)
 
