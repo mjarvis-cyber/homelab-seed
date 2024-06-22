@@ -167,7 +167,7 @@ def configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     data=f"scsihw=virtio-scsi-pci&virtio0=local-lvm:vm-{vmid}-disk-0&serial0=socket&boot=c&bootdisk=virtio0"
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
-def configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, public_key):
+def configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, public_key_path):
     endpoint = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
 
     with open(public_key_path, 'r') as file:
