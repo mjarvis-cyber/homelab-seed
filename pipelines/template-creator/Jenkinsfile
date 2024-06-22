@@ -5,9 +5,9 @@ pipeline {
         }
     }
     parameters {
-        string(name: 'PROXMOX_USERNAME', defaultValue: 'root', description: 'The username to authenticate to proxmox as')
-        string(name: 'PROXMOX_PASSWORD', defaultValue: '', description: 'The password to authenticate to proxmox with')
-        string(name: 'PROXMOX_HOST', defaultValue: '', description: 'Override hosts for Ansible playbook')
+        string(name: 'PROXMOX_USERNAME', defaultValue: 'root@pam', description: 'The username to authenticate to proxmox as')
+        secret(name: 'PROXMOX_PASSWORD', defaultValue: '', description: 'The password to authenticate to proxmox with')
+        string(name: 'PROXMOX_HOST', defaultValue: 'cyberops2.pizzasec.com', description: 'ProxMox host https endpoint')
     }
     stages {
         stage('Checkout') {
@@ -40,33 +40,33 @@ pipeline {
                             sh """
                                 python generate_proxmox_api_credentials.py --username ${params.PROXMOX_USERNAME} --password ${params.PROXMOX_PASSWORD} --host ${params.PROXMOX_HOST}
                             """
-                        }
 
-                        def proxmoxCredentials = readFile('proxmox_credentials.json')
-                        def proxmoxCredentialsJson = readJSON(text: proxmoxCredentials)
-                        def ticket = proxmoxCredentialsJson.ticket
-                        def csrfToken = proxmoxCredentialsJson.csrf_token
+                            def proxmoxCredentials = readFile('proxmox_credentials.json')
+                            def proxmoxCredentialsJson = readJSON(text: proxmoxCredentials)
+                            def ticket = proxmoxCredentialsJson.ticket
+                            def csrfToken = proxmoxCredentialsJson.csrf_token
 
-                        sh """
-                            echo '{"ticket": "${ticket}", "csrf_token": "${csrfToken}"}' > /tmp/proxmox_credentials.json
-                        """
-                        withCredentials([usernamePassword(credentialsId: 'jenkins-api', usernameVariable: 'JENKINS_USERNAME', passwordVariable: 'JENKINS_PASSWORD')]) {
-                            def createCredentialsJson = """
-                            {
-                                "": "0",
-                                "credentials": {
-                                    "scope": "GLOBAL",
-                                    "id": "${credentialsId}",
-                                    "secret": "/tmp/proxmox_credentials.json",
-                                    "description": "Proxmox API credentials",
-                                    "stapler-class": "org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl"
-                                }
-                            }
+                            sh """
+                                echo '{"ticket": "${ticket}", "csrf_token": "${csrfToken}"}' > /tmp/proxmox_credentials.json
                             """
-                            def createCredentialsCommand = "curl -X POST http://localhost:8080/credentials/store/system/domain/_/createCredentials " +
-                                "--user ${JENKINS_USERNAME}:${JENKINS_PASSWORD} " +
-                                "--data-urlencode 'json=${createCredentialsJson.replace('\n', '').replace(' ', '')}'"
-                            sh createCredentialsCommand
+                            withCredentials([usernamePassword(credentialsId: 'jenkins-api', usernameVariable: 'JENKINS_USERNAME', passwordVariable: 'JENKINS_PASSWORD')]) {
+                                def createCredentialsJson = """
+                                {
+                                    "": "0",
+                                    "credentials": {
+                                        "scope": "GLOBAL",
+                                        "id": "${credentialsId}",
+                                        "secret": "/tmp/proxmox_credentials.json",
+                                        "description": "Proxmox API credentials",
+                                        "stapler-class": "org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl"
+                                    }
+                                }
+                                """
+                                def createCredentialsCommand = "curl -X POST http://localhost:8080/credentials/store/system/domain/_/createCredentials " +
+                                    "--user ${JENKINS_USERNAME}:${JENKINS_PASSWORD} " +
+                                    "--data-urlencode 'json=${createCredentialsJson.replace('\n', '').replace(' ', '')}'"
+                                sh createCredentialsCommand
+                            }
                         }
                     } else {
                         echo "Using existing API credentials."

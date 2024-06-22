@@ -11,7 +11,7 @@ def get_proxmox_api_credentials(username, password, host):
     }
 
     response = requests.post(url, headers=headers, data=data, verify=False)
-
+    print(f"Response: {response}")
     if response.status_code == 200:
         result = response.json()
         ticket = result['data']['ticket']
