@@ -169,9 +169,9 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     qcow_file = f"{qcow_dir}/{name}.qcow2"
     public_key_path=f"{template_ssh_key}.pub"
 
-    # print("Generate public key from private key")
-    # public_key = generate_public_key(template_ssh_key, public_key_path)
-    # print(f"Generated public key: {public_key}")
+    print("Generate public key from private key")
+    public_key = generate_public_key(template_ssh_key, public_key_path)
+    print(f"Generated public key: {public_key}")
 
     print(f"Getting cloud image from {image_url} and placing in {qcow_file}")
     get_qcow(image_url, qcow_dir, qcow_file, name)
@@ -183,12 +183,12 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     print("Uploading the qcow, this could take a while")
     upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir, vmid, name)
     time.sleep(15)
-
+    os.remove(qcow_file)
     print("Configuring disk on template")
     configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
-    # print("Configuring cloud-init")
-    # configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, public_key)
+    print("Configuring cloud-init")
+    configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, public_key)
 
 
 
