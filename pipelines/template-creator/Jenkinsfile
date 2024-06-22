@@ -11,7 +11,6 @@ pipeline {
     environment {
         PROXMOX_API_CREDS = credentials('proxmox-api-token')
         PROXMOX_SSH_CREDS = credentials('root-proxmox')
-        TEMPLATE_SSH_CRED_ID = 'ssh-key'
     }
     stages {
         stage('Checkout') {
@@ -26,24 +25,26 @@ pipeline {
         }
         stage('Build Templates') {
             steps {
-                script {
-                    dir('pipelines/template-creator') {
-                        def token_name = PROXMOX_API_CREDS.split(':')[0]
-                        def token_secret = PROXMOX_API_CREDS.split(':')[1]
-                        def proxmox_user = PROXMOX_SSH_CREDS.split(':')[0]
-                        def proxmox_password = PROXMOX_SSH_CREDS.split(':')[1]
-                        def template_ssh_key = sh(returnStdout: true, script: "echo \${TEMPLATE_SSH_CRED_ID}").trim()
+                withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                    script {
+                        dir('pipelines/template-creator') {
+                            def token_name = PROXMOX_API_CREDS.split(':')[0]
+                            def token_secret = PROXMOX_API_CREDS.split(':')[1]
+                            def proxmox_user = PROXMOX_SSH_CREDS.split(':')[0]
+                            def proxmox_password = PROXMOX_SSH_CREDS.split(':')[1]
+                            def template_ssh_key = env.SSH_KEY
 
-                        sh """
-                            python template-creator.py \
-                                --proxmox_ip ${params.PROXMOX_IP} \
-                                --proxmox_node ${params.PROXMOX_NODE} \
-                                --token_name ${token_name} \
-                                --token_secret ${token_secret} \
-                                --user ${proxmox_user} \
-                                --password ${proxmox_password} \
-                                --template_ssh_key ${template_ssh_key}
-                        """
+                            sh """
+                                python template-creator.py \
+                                    --proxmox_ip ${params.PROXMOX_IP} \
+                                    --proxmox_node ${params.PROXMOX_NODE} \
+                                    --token_name ${token_name} \
+                                    --token_secret ${token_secret} \
+                                    --user ${proxmox_user} \
+                                    --password ${proxmox_password} \
+                                    --template_ssh_key ${template_ssh_key}
+                            """
+                        }
                     }
                 }
             }
