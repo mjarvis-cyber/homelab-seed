@@ -142,13 +142,15 @@ def get_qcow(image_url, qcow_dir, qcow_file, name):
 
 def create_ssh_client(server, port, user, password=None, key_file=None):
     client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.WarningPolicy())
+    
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
     if key_file:
-        client.connect(server, port, username=user, key_filename=key_file)
+        client.connect(server, port, username=user, key_filename=key_file, allow_agent=False, look_for_keys=False)
     else:
-        client.connect(server, port, username=user, password=password)
+        client.connect(server, port, username=user, password=password, allow_agent=False, look_for_keys=False)
     
     return client
 
