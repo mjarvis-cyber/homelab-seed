@@ -4,7 +4,9 @@ RUN apt-get update && apt-get install -y \
     qemu-utils \
     jq
 
-RUN pip install -r requirements.txt
+RUN pip install paramiko \
+    requests \
+    scp
 
 COPY . /app
 WORKDIR /app
