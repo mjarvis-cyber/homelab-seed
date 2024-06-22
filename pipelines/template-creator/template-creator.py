@@ -210,14 +210,15 @@ def configure_custom(proxmox_ip, proxmox_node, token_name, token_secret, vmid, u
     scp = SCPClient(ssh.get_transport())
 
     remote_dir="/bootstrap"
+    remote_temp_filename=f"/home/{user}/init-image.sh"
     remote_filename=f"{remote_dir}/init-image.sh"
     stdin, stdout, stderr = ssh.exec_command(f'sudo mkdir -p {remote_dir}')
     exit_status = stdout.channel.recv_exit_status()
     if exit_status != 0:
         print(f"Failed to create directory {remote_dir} on {ip_to_use}")
         return
-    scp.put("init-image.sh", remote_path=remote_filename)
-    stdin, stdout, stderr = ssh.exec_command(f'sudo chmod +x {remote_filename} && sudo {remote_filename}')
+    scp.put("init-image.sh", remote_path=remote_temp_filename)
+    stdin, stdout, stderr = ssh.exec_command(f'sudo mv {remote_temp_filename} {remote_filename} && sudo chmod +x {remote_filename} && sudo {remote_filename}')
     exit_status = stdout.channel.recv_exit_status()
     if exit_status != 0:
         print(f"Failed to execute {remote_filename} on {ip_to_use}")
