@@ -6,6 +6,7 @@ import shutil
 import paramiko
 from scp import SCPClient
 import uuid
+import time
 
 def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret):
     api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
@@ -137,7 +138,10 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     print(f"Creating VM {name} with VMID: {vmid}")
     create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name)
     print(f"Uploading {qcow_file} to proxmox")
+    print("Uploading the qcow, this could take a while")
     upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir, vmid, name)
+    time.sleep(15)
+    print("Configuring disk on template")
     configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
 def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use):
