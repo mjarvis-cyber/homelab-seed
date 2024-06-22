@@ -70,16 +70,11 @@ def generate_public_key(private_key, public_key_path):
         print("Private Key Data:")
         print(private_key)
     
-        public_key = private_key.public_key().public_bytes(
-            serialization.Encoding.OpenSSH,
-            serialization.PublicFormat.OpenSSH
-        )
+        private_key = serialization.load_pem_private_key(private_key, password=None)
+        public_key = private_key.public_key()
+        public_openssh = public_key.public_bytes(encoding=serialization.Encoding.OpenSSH, format=serialization.PublicFormat.OpenSSH )
     
-        with open(public_key_path, 'w') as pub_key_file:
-            pub_key_file.write(public_key.decode('utf-8'))
-    
-        print(f"Public key written to {public_key_path}")
-        return public_key
+        return public_openssh
     except Exception as e:
         print(f"Error loading private key: {e}")
         raise
