@@ -1,6 +1,7 @@
 import requests
 import json
 import argparse
+import os
 
 def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret):
     api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
@@ -33,9 +34,29 @@ def pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end):
             return vmid
     raise ValueError("No available VMID found in the specified range")
 
+def get_qcow(image_url, qcow_dir, qcow_file, name):
+    os.makedirs(qcow_dir, exist_ok=True)
+    qcow_path = f"/tmp/{name}.img"
+
+    response = requests.get(image_url, stream=True)
+    response.raise_for_status()
+
+    with open(qcow_path, 'wb') as file:
+        for chunk in response.iter_content(chunk_size=8192):
+            file.write(chunk)
+
+    os.rename(qcow_path, qcow_file)
+
+    os.system(f"qemu-img resize {qcow_file} 20G")
+
+def vm_creation_pipeline(vmid, name, image_url, ssh_keys, qcow_dir, user, password, ip_to_use):
+    qcow_file = f"{qcow_dir}/{name}.qcow2"
+    get_qcow(image_url, qcow_dir, qcow_file, name)
+
 def runner(proxmox_ip, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, ip_to_use):
     vmid = pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end)
     print(f"Here is the vmid to use: {vmid}")
+    vm_creation_pipeline(vmid, name, image_location, ssh_keys, qcow_dir, user, password, ip_to_use)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
