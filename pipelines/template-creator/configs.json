@@ -5,13 +5,45 @@
     "qcow_dir": "qcows",
     "temporary_ip": "192.168.51.69/22,gw=192.168.50.1",
     "templates": {
+        "ubuntu-18-template": {
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img",
+            "ssh_keys": [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDSy4v1xngMy24gkKc7YKsMrrJ2q4sZGiBFW70/9SAeX11JVtItT2VRFO/6tLitBB9zOnQ4D2pIv6aW0JdnKb3LB81HO5cNhocI3Ur/XO7dzSbzLcAflVejiJmPKDAVbJQx2BV+s62VQnyR2/xSrSi+p5SFp5bgtYVqykjAQZ6KRpK/Xs+wZYdsHum1t9QPQTu37jTGwRt4I9zeGVoTDpQP3lu2xWUA1dodUIxLV5CsfjomKZXvFVI/K6TpyIKTS5FmWl3ovWf/Pam4VrPhLfYkCKJlaNBPFKytE0Fv9HrMMOkph1ciHss/HzZHWSca+HODnW4PoOEbif8Sv0itjBb4nQIE9maVSpgKugpCVOGDl+4hdPzLSax0Icna7Txe1IeFfqqjG8ly/B0xJVVDEET9e8qzBIuYfX2z5/UV5ZilWJGDQiO2ET8aWWUewb6+LnhTCBC1NpjJCMK7FM2YMJHIXiFD8gyRPvScdlIW48N3al6UfWYytHwMsA3TA8vVV6E= wsl@g14",
+                   "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCp0HmuAlP2fDW7nJGKUZr108doGhJP2Wu3CqgzlNB+acc2bWVwMLO5WisK2QMt0x0w/I+BhTgIqEhQIaF5I5iZMLOHWWiv7ssq4kv1iCDR8QQMraqBb0oFOFCSg7tEiJKeABt0Mb7bWQKUO2fLXU132xCR93A8RSj3B2JeEcAXrBizsDsU146fShmAnbdfcfD7/h3s6ElXC4vhRQZwi7s0zd7GrUySTKcNpXE37dE0FT9W1wrxOtgZ5gIfTynZqo+a2vkMsKAw9jHwzIsCgKhKeoUGQyLXsrvr1sMPoJIUlQhFZHiiCg5QrwUO2VzHh4myccMct4FTUeN7GJnecSAhW047BE7Wuh1lq/NXs6STkvkhYWhgmZfRp+VavJzW3bjGANwHBFYvhRnne15YsqUdo/GNcYvsT9t0XOoKsj6yAseGJXJpjLaocA3YjYzOTHtoulD/dxPhoy8x6rLJBDlrp+NAHDBufGPZudpZ4Urtl6LCkGwVwZghaisMajOjx/E= wsl@elon-musk"
+            ]
+        },
+        "ubuntu-20-template": {
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img",
+            "ssh_keys": [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDSy4v1xngMy24gkKc7YKsMrrJ2q4sZGiBFW70/9SAeX11JVtItT2VRFO/6tLitBB9zOnQ4D2pIv6aW0JdnKb3LB81HO5cNhocI3Ur/XO7dzSbzLcAflVejiJmPKDAVbJQx2BV+s62VQnyR2/xSrSi+p5SFp5bgtYVqykjAQZ6KRpK/Xs+wZYdsHum1t9QPQTu37jTGwRt4I9zeGVoTDpQP3lu2xWUA1dodUIxLV5CsfjomKZXvFVI/K6TpyIKTS5FmWl3ovWf/Pam4VrPhLfYkCKJlaNBPFKytE0Fv9HrMMOkph1ciHss/HzZHWSca+HODnW4PoOEbif8Sv0itjBb4nQIE9maVSpgKugpCVOGDl+4hdPzLSax0Icna7Txe1IeFfqqjG8ly/B0xJVVDEET9e8qzBIuYfX2z5/UV5ZilWJGDQiO2ET8aWWUewb6+LnhTCBC1NpjJCMK7FM2YMJHIXiFD8gyRPvScdlIW48N3al6UfWYytHwMsA3TA8vVV6E= wsl@g14",
+                "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCp0HmuAlP2fDW7nJGKUZr108doGhJP2Wu3CqgzlNB+acc2bWVwMLO5WisK2QMt0x0w/I+BhTgIqEhQIaF5I5iZMLOHWWiv7ssq4kv1iCDR8QQMraqBb0oFOFCSg7tEiJKeABt0Mb7bWQKUO2fLXU132xCR93A8RSj3B2JeEcAXrBizsDsU146fShmAnbdfcfD7/h3s6ElXC4vhRQZwi7s0zd7GrUySTKcNpXE37dE0FT9W1wrxOtgZ5gIfTynZqo+a2vkMsKAw9jHwzIsCgKhKeoUGQyLXsrvr1sMPoJIUlQhFZHiiCg5QrwUO2VzHh4myccMct4FTUeN7GJnecSAhW047BE7Wuh1lq/NXs6STkvkhYWhgmZfRp+VavJzW3bjGANwHBFYvhRnne15YsqUdo/GNcYvsT9t0XOoKsj6yAseGJXJpjLaocA3YjYzOTHtoulD/dxPhoy8x6rLJBDlrp+NAHDBufGPZudpZ4Urtl6LCkGwVwZghaisMajOjx/E= wsl@elon-musk"
+            ]
+        },
+        "ubuntu-22-template": {
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img",
+            "ssh_keys": [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDSy4v1xngMy24gkKc7YKsMrrJ2q4sZGiBFW70/9SAeX11JVtItT2VRFO/6tLitBB9zOnQ4D2pIv6aW0JdnKb3LB81HO5cNhocI3Ur/XO7dzSbzLcAflVejiJmPKDAVbJQx2BV+s62VQnyR2/xSrSi+p5SFp5bgtYVqykjAQZ6KRpK/Xs+wZYdsHum1t9QPQTu37jTGwRt4I9zeGVoTDpQP3lu2xWUA1dodUIxLV5CsfjomKZXvFVI/K6TpyIKTS5FmWl3ovWf/Pam4VrPhLfYkCKJlaNBPFKytE0Fv9HrMMOkph1ciHss/HzZHWSca+HODnW4PoOEbif8Sv0itjBb4nQIE9maVSpgKugpCVOGDl+4hdPzLSax0Icna7Txe1IeFfqqjG8ly/B0xJVVDEET9e8qzBIuYfX2z5/UV5ZilWJGDQiO2ET8aWWUewb6+LnhTCBC1NpjJCMK7FM2YMJHIXiFD8gyRPvScdlIW48N3al6UfWYytHwMsA3TA8vVV6E= wsl@g14",
+                "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCp0HmuAlP2fDW7nJGKUZr108doGhJP2Wu3CqgzlNB+acc2bWVwMLO5WisK2QMt0x0w/I+BhTgIqEhQIaF5I5iZMLOHWWiv7ssq4kv1iCDR8QQMraqBb0oFOFCSg7tEiJKeABt0Mb7bWQKUO2fLXU132xCR93A8RSj3B2JeEcAXrBizsDsU146fShmAnbdfcfD7/h3s6ElXC4vhRQZwi7s0zd7GrUySTKcNpXE37dE0FT9W1wrxOtgZ5gIfTynZqo+a2vkMsKAw9jHwzIsCgKhKeoUGQyLXsrvr1sMPoJIUlQhFZHiiCg5QrwUO2VzHh4myccMct4FTUeN7GJnecSAhW047BE7Wuh1lq/NXs6STkvkhYWhgmZfRp+VavJzW3bjGANwHBFYvhRnne15YsqUdo/GNcYvsT9t0XOoKsj6yAseGJXJpjLaocA3YjYzOTHtoulD/dxPhoy8x6rLJBDlrp+NAHDBufGPZudpZ4Urtl6LCkGwVwZghaisMajOjx/E= wsl@elon-musk"
+            ]
+        },
         "ubuntu-24-template": {
-                "user": "ubuntu",
-                "password": "password1!",
-                "img_url": "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img",
-                "ssh_keys": [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDSy4v1xngMy24gkKc7YKsMrrJ2q4sZGiBFW70/9SAeX11JVtItT2VRFO/6tLitBB9zOnQ4D2pIv6aW0JdnKb3LB81HO5cNhocI3Ur/XO7dzSbzLcAflVejiJmPKDAVbJQx2BV+s62VQnyR2/xSrSi+p5SFp5bgtYVqykjAQZ6KRpK/Xs+wZYdsHum1t9QPQTu37jTGwRt4I9zeGVoTDpQP3lu2xWUA1dodUIxLV5CsfjomKZXvFVI/K6TpyIKTS5FmWl3ovWf/Pam4VrPhLfYkCKJlaNBPFKytE0Fv9HrMMOkph1ciHss/HzZHWSca+HODnW4PoOEbif8Sv0itjBb4nQIE9maVSpgKugpCVOGDl+4hdPzLSax0Icna7Txe1IeFfqqjG8ly/B0xJVVDEET9e8qzBIuYfX2z5/UV5ZilWJGDQiO2ET8aWWUewb6+LnhTCBC1NpjJCMK7FM2YMJHIXiFD8gyRPvScdlIW48N3al6UfWYytHwMsA3TA8vVV6E= wsl@g14",
-                        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCp0HmuAlP2fDW7nJGKUZr108doGhJP2Wu3CqgzlNB+acc2bWVwMLO5WisK2QMt0x0w/I+BhTgIqEhQIaF5I5iZMLOHWWiv7ssq4kv1iCDR8QQMraqBb0oFOFCSg7tEiJKeABt0Mb7bWQKUO2fLXU132xCR93A8RSj3B2JeEcAXrBizsDsU146fShmAnbdfcfD7/h3s6ElXC4vhRQZwi7s0zd7GrUySTKcNpXE37dE0FT9W1wrxOtgZ5gIfTynZqo+a2vkMsKAw9jHwzIsCgKhKeoUGQyLXsrvr1sMPoJIUlQhFZHiiCg5QrwUO2VzHh4myccMct4FTUeN7GJnecSAhW047BE7Wuh1lq/NXs6STkvkhYWhgmZfRp+VavJzW3bjGANwHBFYvhRnne15YsqUdo/GNcYvsT9t0XOoKsj6yAseGJXJpjLaocA3YjYzOTHtoulD/dxPhoy8x6rLJBDlrp+NAHDBufGPZudpZ4Urtl6LCkGwVwZghaisMajOjx/E= wsl@elon-musk"
-                ]
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img",
+            "ssh_keys": [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDSy4v1xngMy24gkKc7YKsMrrJ2q4sZGiBFW70/9SAeX11JVtItT2VRFO/6tLitBB9zOnQ4D2pIv6aW0JdnKb3LB81HO5cNhocI3Ur/XO7dzSbzLcAflVejiJmPKDAVbJQx2BV+s62VQnyR2/xSrSi+p5SFp5bgtYVqykjAQZ6KRpK/Xs+wZYdsHum1t9QPQTu37jTGwRt4I9zeGVoTDpQP3lu2xWUA1dodUIxLV5CsfjomKZXvFVI/K6TpyIKTS5FmWl3ovWf/Pam4VrPhLfYkCKJlaNBPFKytE0Fv9HrMMOkph1ciHss/HzZHWSca+HODnW4PoOEbif8Sv0itjBb4nQIE9maVSpgKugpCVOGDl+4hdPzLSax0Icna7Txe1IeFfqqjG8ly/B0xJVVDEET9e8qzBIuYfX2z5/UV5ZilWJGDQiO2ET8aWWUewb6+LnhTCBC1NpjJCMK7FM2YMJHIXiFD8gyRPvScdlIW48N3al6UfWYytHwMsA3TA8vVV6E= wsl@g14",
+                "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCp0HmuAlP2fDW7nJGKUZr108doGhJP2Wu3CqgzlNB+acc2bWVwMLO5WisK2QMt0x0w/I+BhTgIqEhQIaF5I5iZMLOHWWiv7ssq4kv1iCDR8QQMraqBb0oFOFCSg7tEiJKeABt0Mb7bWQKUO2fLXU132xCR93A8RSj3B2JeEcAXrBizsDsU146fShmAnbdfcfD7/h3s6ElXC4vhRQZwi7s0zd7GrUySTKcNpXE37dE0FT9W1wrxOtgZ5gIfTynZqo+a2vkMsKAw9jHwzIsCgKhKeoUGQyLXsrvr1sMPoJIUlQhFZHiiCg5QrwUO2VzHh4myccMct4FTUeN7GJnecSAhW047BE7Wuh1lq/NXs6STkvkhYWhgmZfRp+VavJzW3bjGANwHBFYvhRnne15YsqUdo/GNcYvsT9t0XOoKsj6yAseGJXJpjLaocA3YjYzOTHtoulD/dxPhoy8x6rLJBDlrp+NAHDBufGPZudpZ4Urtl6LCkGwVwZghaisMajOjx/E= wsl@elon-musk"
+            ]
+        },
+        "oracle-9": {
+            "user": "oracle",
+            "password": "password1!",
+            "img_url": "https://yum.oracle.com/templates/OracleLinux/OL9/u4/x86_64/OL9U4_x86_64-kvm-b234.qcow2",
+            "ssh_keys": [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDSy4v1xngMy24gkKc7YKsMrrJ2q4sZGiBFW70/9SAeX11JVtItT2VRFO/6tLitBB9zOnQ4D2pIv6aW0JdnKb3LB81HO5cNhocI3Ur/XO7dzSbzLcAflVejiJmPKDAVbJQx2BV+s62VQnyR2/xSrSi+p5SFp5bgtYVqykjAQZ6KRpK/Xs+wZYdsHum1t9QPQTu37jTGwRt4I9zeGVoTDpQP3lu2xWUA1dodUIxLV5CsfjomKZXvFVI/K6TpyIKTS5FmWl3ovWf/Pam4VrPhLfYkCKJlaNBPFKytE0Fv9HrMMOkph1ciHss/HzZHWSca+HODnW4PoOEbif8Sv0itjBb4nQIE9maVSpgKugpCVOGDl+4hdPzLSax0Icna7Txe1IeFfqqjG8ly/B0xJVVDEET9e8qzBIuYfX2z5/UV5ZilWJGDQiO2ET8aWWUewb6+LnhTCBC1NpjJCMK7FM2YMJHIXiFD8gyRPvScdlIW48N3al6UfWYytHwMsA3TA8vVV6E= wsl@g14",
+                "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCp0HmuAlP2fDW7nJGKUZr108doGhJP2Wu3CqgzlNB+acc2bWVwMLO5WisK2QMt0x0w/I+BhTgIqEhQIaF5I5iZMLOHWWiv7ssq4kv1iCDR8QQMraqBb0oFOFCSg7tEiJKeABt0Mb7bWQKUO2fLXU132xCR93A8RSj3B2JeEcAXrBizsDsU146fShmAnbdfcfD7/h3s6ElXC4vhRQZwi7s0zd7GrUySTKcNpXE37dE0FT9W1wrxOtgZ5gIfTynZqo+a2vkMsKAw9jHwzIsCgKhKeoUGQyLXsrvr1sMPoJIUlQhFZHiiCg5QrwUO2VzHh4myccMct4FTUeN7GJnecSAhW047BE7Wuh1lq/NXs6STkvkhYWhgmZfRp+VavJzW3bjGANwHBFYvhRnne15YsqUdo/GNcYvsT9t0XOoKsj6yAseGJXJpjLaocA3YjYzOTHtoulD/dxPhoy8x6rLJBDlrp+NAHDBufGPZudpZ4Urtl6LCkGwVwZghaisMajOjx/E= wsl@elon-musk"
+            ] 
         }
     }
 }

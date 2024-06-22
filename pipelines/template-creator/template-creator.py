@@ -182,6 +182,15 @@ def configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     data["sshkeys"] = sshKey
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
+def make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
+    endpoint = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/template"
+    response = post_cluster_query(cluster_query=endpoint, data=None, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
+
+    if response:
+        print(f"Template creation response: {response}")
+    else:
+        print("Failed to create template")
+
 def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
     endpoint=f"api2/json/nodes/{proxmox_node}/qemu"
     data=f"vmid={vmid}&name={name}&cores=2&memory=2048&onboot=1&vga=qxl&hotplug=disk,network,usb"
@@ -212,7 +221,8 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     print("Configuring cloud-init")
     configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, ssh_keys)
 
-
+    print("Converting to template")
+    make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
 def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key):
     vmid = pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end)
