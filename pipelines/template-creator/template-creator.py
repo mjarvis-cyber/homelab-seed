@@ -4,6 +4,7 @@ import argparse
 import os
 import shutil
 import paramiko
+from scp import SCPClient
 
 def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret):
     api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
