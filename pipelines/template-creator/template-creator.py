@@ -148,7 +148,7 @@ def create_ssh_client(server, port, user, password):
     return client
 
 def upload_qcow(proxmox_ip, proxmox_node, user, password, qcow_file, remote_dir, vmid, name):
-    remote_filename=f"{remote_dir}/{name}.qcow2"
+    remote_filename = f"{remote_dir}/{name}.qcow2"
     ssh = create_ssh_client(proxmox_ip, 22, user, password)
     scp = SCPClient(ssh.get_transport())
     
@@ -159,7 +159,13 @@ def upload_qcow(proxmox_ip, proxmox_node, user, password, qcow_file, remote_dir,
         return
     
     scp.put(qcow_file, remote_path=remote_filename)
-    ssh.exec_command(f"qm importdisk {vmid} {remote_filename} local-lvm")
+    
+    stdin, stdout, stderr = ssh.exec_command(f"qm importdisk {vmid} {remote_filename} local-lvm")
+    exit_status = stdout.channel.recv_exit_status()
+    if exit_status != 0:
+        print(f"Failed to import disk {remote_filename} to VM {vmid} on {proxmox_ip}")
+        return
+    
     scp.close()
     ssh.close()
 
