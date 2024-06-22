@@ -103,9 +103,8 @@ def create_ssh_client(server, port, user, password):
     client.connect(server, port, user, password)
     return client
 
-def upload_qcow(proxmox_ip, proxmox_node, user, password, qcow_file, remote_dir, vmid):
-    temp_uuid=uuid.uuid4()
-    temp_filename=f"{remote_dir}/{temp_uuid}.qcow2"
+def upload_qcow(proxmox_ip, proxmox_node, user, password, qcow_file, remote_dir, vmid, name):
+    remote_filename=f"{remote_dir}/{name}.qcow2"
     ssh = create_ssh_client(proxmox_ip, 22, user, password)
     scp = SCPClient(ssh.get_transport())
     
@@ -115,8 +114,8 @@ def upload_qcow(proxmox_ip, proxmox_node, user, password, qcow_file, remote_dir,
         print(f"Failed to create directory {remote_dir} on {proxmox_ip}")
         return
     
-    scp.put(qcow_file, remote_path=remote_dir/temp.qcow2)
-    ssh.exec_command(f"qm importdisk {vmid} {temp_filename} local-lvm")
+    scp.put(qcow_file, remote_path=remote_filename)
+    ssh.exec_command(f"qm importdisk {vmid} {remote_filename} local-lvm")
     scp.close()
     ssh.close()
 
@@ -138,7 +137,7 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     print(f"Creating VM {name} with VMID: {vmid}")
     create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name)
     print(f"Uploading {qcow_file} to proxmox")
-    upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir, vmid)
+    upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir, vmid, name)
     configure_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
 def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use):
