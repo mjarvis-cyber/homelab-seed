@@ -5,16 +5,10 @@ pipeline {
         }
     }
     parameters {
-        string(name: 'PROXMOX_USERNAME', defaultValue: 'root@pam', description: 'The username to authenticate to proxmox as')
-        password(name: 'PROXMOX_PASSWORD', description: 'The password to authenticate to proxmox with')
-        string(name: 'PROXMOX_HOST', defaultValue: 'cyberops2.pizzasec.com', description: 'ProxMox host https endpoint')
-        string(name: 'JENKINS_URL', defaultValue: 'http://jenkins.pizzasec.com:8080', description: 'Jenkins base URL')
-        string(name: 'JENKINS_USERNAME', defaultValue: 'admin', description: 'Jenkins username')
-        password(name: 'JENKINS_PASSWORD',  description: 'Jenkins password')
+        string(name: 'PROXMOX_IP', defaultValue: 'cyberops2.pizzasec.com', description: 'ProxMox IP address')
     }
     environment {
-        JENKINS_CRUMB = ''
-        JENKINS_API_TOKEN = ''
+        PROXMOX_API_CREDS = credentials('proxmox-api-token')
     }
     stages {
         stage('Checkout') {
@@ -27,54 +21,19 @@ pipeline {
                 ])
             }
         }
-        stage('Fetch Jenkins Crumb') {
-            steps {
-                script {
-                    def crumb = httpRequest(
-                        acceptType: 'application/json',
-                        contentType: 'application/json',
-                        httpMode: 'GET',
-                        url: "${JENKINS_URL}/crumbIssuer/api/json"
-                    )
-                    JENKINS_CRUMB = crumb.getResponseHeaders()['X-Jenkins-Crumb']
-                    echo "Jenkins crumb fetched: ${JENKINS_CRUMB}"
-                }
-            }
-        }
-        stage('Fetch Jenkins API Token') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'jenkins-api', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_API_TOKEN')]) {
-                        echo "Jenkins API Token: ${JENKINS_API_TOKEN}"
-                    }
-                }
-            }
-        }
-        stage('Get API Creds') {
-            steps {
-                script {
-                    dir('pipelines/template-creator') {
-                        sh """
-                            python generate_and_add_credentials.py \\
-                            --username '${params.PROXMOX_USERNAME}' \\
-                            --password '${params.PROXMOX_PASSWORD}' \\
-                            --host '${params.PROXMOX_HOST}' \\
-                            --credentials-id 'proxmox-api-credentials' \\
-                            --credentials-file 'proxmox_credentials.json' \\
-                            --jenkins-url '${JENKINS_URL}' \\
-                            --jenkins-user '${JENKINS_USER}' \\
-                            --api-token '${JENKINS_API_TOKEN}' \\
-                            --jenkins-crumb '${JENKINS_CRUMB}'
-                        """
-                    }
-                }
-            }
-        }
         stage('Build Templates') {
             steps {
                 script {
                     dir('pipelines/template-creator') {
-                        sh 'python template-creator.py'
+                        def token_name = PROXMOX_API_CREDS.split(':')[0]
+                        def token_secret = PROXMOX_API_CREDS.split(':')[1]
+                        
+                        sh """
+                            python template-creator.py \
+                                --proxmox_ip ${params.PROXMOX_IP} \
+                                --token_name ${token_name} \
+                                --token_secret ${token_secret}
+                        """
                     }
                 }
             }
