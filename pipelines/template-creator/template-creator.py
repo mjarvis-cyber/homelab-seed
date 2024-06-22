@@ -220,7 +220,7 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
 
     print("Configuring cloud-init")
     configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, password, ssh_keys)
-
+    time.sleep(15)
     print("Converting to template")
     make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
