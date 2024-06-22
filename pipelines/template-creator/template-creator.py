@@ -10,6 +10,7 @@ from scp import SCPClient
 import uuid
 import time
 import urllib.parse
+from urllib.parse import quote
 
 def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret):
     api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
