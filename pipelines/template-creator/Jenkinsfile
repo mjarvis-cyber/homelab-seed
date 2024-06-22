@@ -12,6 +12,10 @@ pipeline {
         string(name: 'JENKINS_USERNAME', defaultValue: 'admin', description: 'Jenkins username')
         password(name: 'JENKINS_PASSWORD',  description: 'Jenkins password')
     }
+    environment {
+        JENKINS_CRUMB = ''
+        JENKINS_API_TOKEN = ''
+    }
     stages {
         stage('Checkout') {
             steps {
@@ -23,19 +27,44 @@ pipeline {
                 ])
             }
         }
+        stage('Fetch Jenkins Crumb') {
+            steps {
+                script {
+                    def crumb = httpRequest(
+                        acceptType: 'application/json',
+                        contentType: 'application/json',
+                        httpMode: 'GET',
+                        url: "${JENKINS_URL}/crumbIssuer/api/json"
+                    )
+                    JENKINS_CRUMB = crumb.getResponseHeaders()['X-Jenkins-Crumb']
+                    echo "Jenkins crumb fetched: ${JENKINS_CRUMB}"
+                }
+            }
+        }
+        stage('Fetch Jenkins API Token') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'jenkins-api', usernameVariable: 'JENKINS_USER', passwordVariable: 'JENKINS_API_TOKEN')]) {
+                        echo "Jenkins API Token: ${JENKINS_API_TOKEN}"
+                    }
+                }
+            }
+        }
         stage('Get API Creds') {
             steps {
                 script {
                     dir('pipelines/template-creator') {
                         sh """
-                            python generate_proxmox_api_credentials.py \\
+                            python generate_and_add_credentials.py \\
                             --username '${params.PROXMOX_USERNAME}' \\
                             --password '${params.PROXMOX_PASSWORD}' \\
                             --host '${params.PROXMOX_HOST}' \\
                             --credentials-id 'proxmox-api-credentials' \\
-                            --jenkins-url '${params.JENKINS_URL}' \\
-                            --jenkins-username '${params.JENKINS_USERNAME}' \\
-                            --jenkins-password '${params.JENKINS_PASSWORD}'
+                            --credentials-file 'proxmox_credentials.json' \\
+                            --jenkins-url '${JENKINS_URL}' \\
+                            --jenkins-user '${JENKINS_USER}' \\
+                            --api-token '${JENKINS_API_TOKEN}' \\
+                            --jenkins-crumb '${JENKINS_CRUMB}'
                         """
                     }
                 }

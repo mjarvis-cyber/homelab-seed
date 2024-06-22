@@ -1,6 +1,7 @@
 import requests
 import json
 import argparse
+from xml.etree.ElementTree import Element, SubElement, tostring
 
 def get_proxmox_api_credentials(username, password, host):
     url = f"https://{host}:8006/api2/json/access/ticket"
@@ -12,7 +13,7 @@ def get_proxmox_api_credentials(username, password, host):
 
     try:
         response = requests.post(url, headers=headers, data=data, verify=False)
-        response.raise_for_status()
+        response.raise_for_status()  # Raise exception for non-200 responses
         result = response.json()
         ticket = result['data']['ticket']
         csrf_token = result['data']['CSRFPreventionToken']
@@ -29,30 +30,29 @@ def save_credentials(ticket, csrf_token, credentials_file):
     with open(credentials_file, 'w') as f:
         json.dump(credentials, f)
 
-def add_jenkins_credentials(credentials_id, credentials_file, jenkins_url, jenkins_username, jenkins_password):
-    url = f"{jenkins_url}/credentials/store/system/domain/_/createCredentials"
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
+def create_jenkins_credentials_xml(credentials_id, credentials_file):
+    credentials_xml = Element('com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl')
+    SubElement(credentials_xml, 'scope').text = 'GLOBAL'
+    SubElement(credentials_xml, 'id').text = credentials_id
+    SubElement(credentials_xml, 'description').text = 'Proxmox API credentials'
 
     with open(credentials_file, 'r') as f:
         credentials_json = json.load(f)
 
-    data = {
-        'json': json.dumps({
-            '': '0',
-            'credentials': {
-                'scope': 'GLOBAL',
-                'id': credentials_id,
-                'secret': json.dumps(credentials_json),
-                'description': 'Proxmox API credentials',
-                'stapler-class': 'org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl'
-            }
-        })
+    SubElement(credentials_xml, 'username').text = credentials_json['username']
+    SubElement(credentials_xml, 'password').text = credentials_json['password']
+
+    return tostring(credentials_xml, encoding='unicode')
+
+def add_jenkins_credentials(credentials_xml, jenkins_url, jenkins_user, api_token, jenkins_crumb):
+    url = f"{jenkins_url}/credentials/store/system/domain/_/createCredentials"
+    headers = {
+        'Jenkins-Crumb': jenkins_crumb,
+        'Content-Type': 'application/xml'
     }
 
     try:
-        response = requests.post(url, headers=headers, auth=(jenkins_username, jenkins_password), data=data, verify=False)
+        response = requests.post(url, headers=headers, auth=(jenkins_user, api_token), data=credentials_xml, verify=False)
         response.raise_for_status()  # Raise exception for non-200 responses
         print("Credentials added successfully to Jenkins")
     except requests.exceptions.RequestException as e:
@@ -66,8 +66,9 @@ if __name__ == "__main__":
     parser.add_argument('--credentials-id', required=True, help="Jenkins credentials ID")
     parser.add_argument('--credentials-file', default='proxmox_credentials.json', help="File to save the credentials")
     parser.add_argument('--jenkins-url', required=True, help="Jenkins base URL")
-    parser.add_argument('--jenkins-username', required=True, help="Jenkins username")
-    parser.add_argument('--jenkins-password', required=True, help="Jenkins password")
+    parser.add_argument('--jenkins-user', required=True, help="Jenkins username")
+    parser.add_argument('--api-token', required=True, help="Jenkins API token")
+    parser.add_argument('--jenkins-crumb', required=True, help="Jenkins crumb")
 
     args = parser.parse_args()
 
@@ -75,6 +76,7 @@ if __name__ == "__main__":
 
     if ticket and csrf_token:
         save_credentials(ticket, csrf_token, args.credentials_file)
-        add_jenkins_credentials(args.credentials_id, args.credentials_file, args.jenkins_url, args.jenkins_username, args.jenkins_password)
+        credentials_xml = create_jenkins_credentials_xml(args.credentials_id, args.credentials_file)
+        add_jenkins_credentials(credentials_xml, args.jenkins_url, args.jenkins_user, args.api_token, args.jenkins_crumb)
     else:
         print("Failed to generate credentials")
