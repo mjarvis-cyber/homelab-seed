@@ -216,6 +216,7 @@ def main():
     proxmox_user = args.user
     proxmox_password = args.password
     template_ssh_key = args.template_ssh_key
+    print(f"The ssh key: {template_ssh_key}")
 
     ssh_key_file_path = "/tmp/template_ssh_key"
     with open(ssh_key_file_path, "w") as key_file:
