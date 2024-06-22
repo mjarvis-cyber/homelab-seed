@@ -17,6 +17,48 @@ def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret
     else:
         response.raise_for_status()
 
+def delete_cluster_query(cluster_query, proxmox_ip, token_name, token_secret):
+    api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
+    headers = {
+        "Authorization": f"PVEAPIToken={token_name}={token_secret}"
+    }
+
+    response = requests.delete(api_url, headers=headers, verify=False)
+    
+    if response.status_code in (200, 204):
+        return response.json() if response.content else "Deletion successful"
+    else:
+        response.raise_for_status()
+
+def post_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret):
+    api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
+    headers = {
+        "Authorization": f"PVEAPIToken={token_name}={token_secret}"
+    }
+
+    if data:
+        response = requests.post(api_url, headers=headers, data=data, verify=False)
+    else:
+        response = requests.post(api_url, headers=headers, verify=False)
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        response.raise_for_status()
+
+def put_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret):
+    api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
+    headers = {
+        "Authorization": f"PVEAPIToken={token_name}={token_secret}"
+    }
+
+    response = requests.put(api_url, headers=headers, data=data, verify=False)
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        response.raise_for_status()
+
 def get_vm_metadata(proxmox_ip, token_name, token_secret):
     vm_data = {}
     vmids = get_cluster_query_output("api2/json/cluster/resources", proxmox_ip, token_name, token_secret)["data"]
@@ -48,20 +90,30 @@ def get_qcow(image_url, qcow_dir, qcow_file, name):
 
     shutil.move(qcow_path, qcow_file)
 
-    os.system(f"qemu-img resize {qcow_file} 32G")
+    print(f"Moving {qcow_path} to {qcow_dir}")
+    os.system(f"qemu-img resize {qcow_file} 20G")
 
-def vm_creation_pipeline(vmid, name, image_url, ssh_keys, qcow_dir, user, password, ip_to_use):
+def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
+    endpoint=f"api2/json/nodes/{proxmox_node}/qemu"
+    data=f"vmid={vmid}&name={name}&full=1"
+    post_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
+
+def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_url, ssh_keys, qcow_dir, user, password, ip_to_use):
     qcow_file = f"{qcow_dir}/{name}.qcow2"
+    print(f"Getting cloud image from {image_url} and placing in {qcow_file}")
     get_qcow(image_url, qcow_dir, qcow_file, name)
+    print(f"Creating VM {name} with VMID: {vmid}")
+    create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name)
 
-def runner(proxmox_ip, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, ip_to_use):
+def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, ip_to_use):
     vmid = pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end)
     print(f"Here is the vmid to use: {vmid}")
-    vm_creation_pipeline(vmid, name, image_location, ssh_keys, qcow_dir, user, password, ip_to_use)
+    vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_location, ssh_keys, qcow_dir, user, password, ip_to_use)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
     parser.add_argument("--proxmox_ip", required=True, help="Proxmox IP address")
+    parser.add_argument("--proxmox_node", required=True, help="Proxmox host to build the template on")
     parser.add_argument("--token_name", required=True, help="Proxmox API token name")
     parser.add_argument("--token_secret", required=True, help="Proxmox API token secret")
 
@@ -81,6 +133,7 @@ def main():
 
         runner(
             proxmox_ip,
+            proxmox_npde,
             token_name,
             token_secret,
             config['resource_pool'],
