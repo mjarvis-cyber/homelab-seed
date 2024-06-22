@@ -65,15 +65,10 @@ def put_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret)
     else:
         response.raise_for_status()
 
-def generate_public_key(key_data, public_key_path):
+def generate_public_key(private_key, public_key_path):
     try:
-            print("Private Key Data:")
-            print(key_data)
-            private_key = serialization.load_pem_private_key(
-                key_data,
-                password=None,
-                backend=default_backend()
-            )
+        print("Private Key Data:")
+        print(private_key)
     
         public_key = private_key.public_key().public_bytes(
             serialization.Encoding.OpenSSH,
