@@ -70,13 +70,21 @@ def generate_public_key(private_key_path, public_key_path):
         with open(private_key_path, "rb") as key_file:
             private_key_data = key_file.read()
             print(f"Private Key (start): {private_key_data[:30]}")
+            print(f"Private Key (mid): {private_key_data[2:3]}")
             print(f"Private Key (end): {private_key_data[-30:]}")
-
-            private_key = serialization.load_pem_private_key(
-                private_key_data,
-                password=None,
-                backend=default_backend()
-            )
+        
+        private_key = paramiko.RSAKey(file_obj=private_key_path)
+        pem_data = private_key.key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        
+        private_key = serialization.load_pem_private_key(
+            pem_data,
+            password=None,
+            backend=default_backend()
+        )
     
         public_key = private_key.public_key().public_bytes(
             serialization.Encoding.OpenSSH,
