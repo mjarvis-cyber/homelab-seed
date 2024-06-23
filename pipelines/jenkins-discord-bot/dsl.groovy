@@ -1,4 +1,4 @@
-pipelineJob('Discord Bot') {
+pipelineJob('discord-bot') {
     displayName('Discord Bot')
     description('Jenkins Discord Bot')
 
