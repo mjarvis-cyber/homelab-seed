@@ -343,7 +343,7 @@ def thread_worker(queue, proxmox_ip, proxmox_node, token_name, token_secret, res
     while True:
         try:
             template_name, template = queue.get(block=False)
-        except Queue.Empty:
+        except Queue.empty:
             break
         
         ssh_keys_file = f"{template_name}-keys.pub"
