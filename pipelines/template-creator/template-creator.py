@@ -119,13 +119,13 @@ def get_vm_metadata(proxmox_ip, token_name, token_secret):
     return vm_data
 
 def pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end):
+    time.sleep(2) # time for proxmox to do stuff
     vm_metadata = get_vm_metadata(proxmox_ip, token_name, token_secret)
     used_vmids = vm_metadata.keys()
     for vmid in range(vmid_start, vmid_end + 1):
         if vmid not in used_vmids:
             return vmid
     raise ValueError("No available VMID found in the specified range")
-    pass
 
 def get_qcow(image_url, qcow_dir, qcow_file, name):
     os.makedirs(qcow_dir, exist_ok=True)
@@ -293,7 +293,8 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
 
 def runner(proxmox_ip, proxmox_node, token_name, token_secret, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key, temporary_ips_queue):
-    vmid = pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end)
+    with vmid_lock:
+        vmid = pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end)
     print(f"Here is the vmid to use for {name}: {vmid}")
     vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_location, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key)
 
