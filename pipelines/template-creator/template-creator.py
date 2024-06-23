@@ -259,7 +259,46 @@ def create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name):
     data["hotplug"]="disk,network,usb"
     post_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
-def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_url, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key):
+def check_pool(proxmox_ip, token_name, token_secret, pool_name):
+    # check if pool exists already
+    endpoint = "api2/json/pools"
+    response = get_cluster_query_output(endpoint, proxmox_ip, token_name, token_secret)
+    
+    existing_pools = response.get('data', [])
+    
+    if not existing_pools:
+        print(f"No pools found.")
+        return False
+    
+    pool_ids = [pool.get('poolid', '') for pool in existing_pools]
+    
+    if pool_name in pool_ids:
+        print(f"Pool '{pool_name}' already exists.")
+        return True
+    else:
+        print(f"Pool {pool_name} not found")
+        return False
+    
+def create_pool(proxmox_ip, token_name, token_secret, pool_name):
+    endpoint = "api2/json/pools"
+    data={}
+    data["poolid"]=pool_name
+    post_cluster_query(cluster_query=endpoint, data=data, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
+
+def ensure_resource_pool(proxmox_ip, token_name, token_secret, pool_name):
+    exists = check_pool(proxmox_ip, token_name, token_secret, pool_name)
+    if not exists:
+        create_pool(proxmox_ip, token_name, token_secret, pool_name)
+
+def set_vm_resource_pool(proxmox_ip, token_name, token_secret, resource_pool, vmid):
+    endpoint = f"api2/json/pools"
+    data={}
+    data["poolid"]=resource_pool
+    data["vms"]=vmid
+    data["allow-move"]="1"
+    put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret) 
+
+def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool, vmid, name, image_url, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key):
     remote_dir="/root/qcows"
     qcow_file = f"{qcow_dir}/{name}.qcow2"
 
@@ -288,16 +327,17 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
 
     print("Converting to template")
     make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
+    set_vm_resource_pool(proxmox_ip, token_name, token_secret, resource_pool, vmid)
 
-def runner(proxmox_ip, proxmox_node, token_name, token_secret, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key, temporary_ips_queue):
+def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key, temporary_ips_queue):
     with vmid_lock:
         vmid = pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end)
         print(f"Creating VM {name} with VMID: {vmid}")
         create_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name)
     print(f"Here is the vmid to use for {name}: {vmid}")
-    vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_location, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key)
+    vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool, vmid, name, image_location, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key)
 
-def thread_worker(queue, proxmox_ip, proxmox_node, token_name, token_secret, template_start_id, template_end_id, qcow_dir, ssh_keys, proxmox_user, proxmox_password, temporary_ips_queue, template_ssh_key):
+def thread_worker(queue, proxmox_ip, proxmox_node, token_name, token_secret, resource_pool, template_start_id, template_end_id, qcow_dir, ssh_keys, proxmox_user, proxmox_password, temporary_ips_queue, template_ssh_key):
     while True:
         try:
             template_name, template = queue.get(block=False)
@@ -315,6 +355,7 @@ def thread_worker(queue, proxmox_ip, proxmox_node, token_name, token_secret, tem
             proxmox_node,
             token_name,
             token_secret,
+            resource_pool,
             template_name,
             template_start_id,
             template_end_id,
@@ -352,7 +393,10 @@ def main():
     proxmox_user = args.user
     proxmox_password = args.password
     template_ssh_key = args.template_ssh_key
+    resource_pool=config['resource_pool']
     print(f"The ssh key: {template_ssh_key}")
+    
+    ensure_resource_pool(proxmox_ip, token_name, token_secret, resource_pool)
 
     with open("configs.json", "r") as file:
         config = json.load(file)
@@ -379,6 +423,7 @@ def main():
             proxmox_node,
             token_name,
             token_secret,
+            config['resource_pool'],
             config['template_start_id'],
             config['template_end_id'],
             config['qcow_dir'],

@@ -1,4 +1,5 @@
 {
+    "resource_pool": "templates",
     "template_start_id": 900,
     "template_end_id": 950,
     "qcow_dir": "qcows",
