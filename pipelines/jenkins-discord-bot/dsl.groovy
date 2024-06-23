@@ -13,7 +13,7 @@ pipelineJob('Discord Bot') {
                     branch('master')
                 }
             }
-            scriptPath('pipelines/test/Jenkinsfile')
+            scriptPath('Jenkinsfile')
         }
     }
 }
