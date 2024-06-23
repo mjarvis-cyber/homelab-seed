@@ -343,7 +343,7 @@ def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool, na
 def thread_worker(queue, proxmox_ip, proxmox_node, token_name, token_secret, resource_pool, template_start_id, template_end_id, qcow_dir, ssh_keys, proxmox_user, proxmox_password, temporary_ips_queue, template_ssh_key):
     while True:
         try:
-            template_name, template = queue.get_nowait()
+            template_name, template = queue.get(block=False)
         except Empty:
             break
         
@@ -351,7 +351,7 @@ def thread_worker(queue, proxmox_ip, proxmox_node, token_name, token_secret, res
         with open(ssh_keys_file, 'w') as file:
             file.write("\n".join(ssh_keys))
         
-        temporary_ip = temporary_ips_queue.pop(0)
+        temporary_ip = temporary_ips_queue.get()
         
         runner(
             proxmox_ip,
@@ -370,13 +370,12 @@ def thread_worker(queue, proxmox_ip, proxmox_node, token_name, token_secret, res
             proxmox_user,
             proxmox_password,
             temporary_ip,
-            template_ssh_key
+            template_ssh_key,
+            temporary_ips_queue
         )
         
         queue.task_done()
-        
-        # Add the temporary_ip back to the list for reuse
-        temporary_ips_queue.append(temporary_ip)
+        temporary_ips_queue.put(temporary_ip)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
