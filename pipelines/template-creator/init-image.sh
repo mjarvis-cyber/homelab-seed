@@ -4,6 +4,7 @@ install_packages="qemu-guest-agent"
 echo
 if which apt-get &>/dev/null; then
     echo "[+] --- Installing packages '$install_packages'"
+    sudo apt update -y
     if ! sudo apt-get install -y --force-yes $install_packages; then
         echo "[!] Could not install packages"
     else

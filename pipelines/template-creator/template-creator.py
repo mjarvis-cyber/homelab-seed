@@ -194,6 +194,7 @@ def configure_cloud_init(proxmox_ip, proxmox_node, token_name, token_secret, vmi
     data={}
     data["sshkeys"] = sshKey
     data["ipconfig0"]="ip=dhcp"
+    data["ciupgrade"]="0"
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def configure_custom(proxmox_ip, proxmox_node, token_name, token_secret, vmid, user, ssh_key_file, ip_to_use):

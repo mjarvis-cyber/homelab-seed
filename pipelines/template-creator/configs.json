@@ -8,27 +8,47 @@
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCp0HmuAlP2fDW7nJGKUZr108doGhJP2Wu3CqgzlNB+acc2bWVwMLO5WisK2QMt0x0w/I+BhTgIqEhQIaF5I5iZMLOHWWiv7ssq4kv1iCDR8QQMraqBb0oFOFCSg7tEiJKeABt0Mb7bWQKUO2fLXU132xCR93A8RSj3B2JeEcAXrBizsDsU146fShmAnbdfcfD7/h3s6ElXC4vhRQZwi7s0zd7GrUySTKcNpXE37dE0FT9W1wrxOtgZ5gIfTynZqo+a2vkMsKAw9jHwzIsCgKhKeoUGQyLXsrvr1sMPoJIUlQhFZHiiCg5QrwUO2VzHh4myccMct4FTUeN7GJnecSAhW047BE7Wuh1lq/NXs6STkvkhYWhgmZfRp+VavJzW3bjGANwHBFYvhRnne15YsqUdo/GNcYvsT9t0XOoKsj6yAseGJXJpjLaocA3YjYzOTHtoulD/dxPhoy8x6rLJBDlrp+NAHDBufGPZudpZ4Urtl6LCkGwVwZghaisMajOjx/E= wsl@elon-musk"
     ],
     "templates": {
-        "ubuntu-18-template": {
+        "ubuntu-18": {
             "user": "ubuntu",
             "password": "password1!",
             "img_url": "https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img"
         },
-        "ubuntu-20-template": {
+        "ubuntu-20": {
             "user": "ubuntu",
             "password": "password1!",
             "img_url": "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img"
         },
-        "ubuntu-22-template": {
+        "ubuntu-22": {
             "user": "ubuntu",
             "password": "password1!",
             "img_url": "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
         },
-        "ubuntu-24-template": {
+        "ubuntu-24": {
             "user": "ubuntu",
             "password": "password1!",
             "img_url": "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
         },
-		"alma8template": {
+        "ubuntu-18-oldest": {
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "http://cloud-images-archive.ubuntu.com/releases/bionic/release-20180426.2/ubuntu-18.04-server-cloudimg-amd64.img"
+        },
+        "ubuntu-20-oldest": {
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "http://cloud-images-archive.ubuntu.com/releases/focal/release-20200423/ubuntu-20.04-server-cloudimg-amd64.img"
+        },
+        "ubuntu-22-oldest": {
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "https://cloud-images.ubuntu.com/releases/22.04/release-20221101.1/ubuntu-22.04-server-cloudimg-amd64.img"
+        },
+        "ubuntu-24-oldest": {
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "https://cloud-images.ubuntu.com/releases/24.04/release-20240423/ubuntu-24.04-server-cloudimg-amd64.img"
+        },
+		"alma-8-template": {
 			"user": "alma",
 			"password": "password1!",
 			"img_url": "https://github.com/AlmaLinux/cloud-images/releases/download/digitalocean-20211207/almalinux-8-DigitalOcean-8.5.20211207.x86_64.qcow2"
