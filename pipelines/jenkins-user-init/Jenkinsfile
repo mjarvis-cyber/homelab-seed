@@ -1,4 +1,6 @@
 pipeline {
+    agent any
+    
     stages {
         stage('Checkout') {
             steps {
@@ -14,35 +16,18 @@ pipeline {
         stage('Create Jenkins API token') {
             steps {
                 script {
-                    import hudson.model.*
-                    import jenkins.model.*
-                    import jenkins.security.*
-                    import jenkins.security.apitoken.*
-                    import com.cloudbees.plugins.credentials.domains.Domain
-                    import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl
-                    import com.cloudbees.plugins.credentials.CredentialsScope
-                    
                     def userName = 'jenkins'
                     def tokenName = 'JENKINS_CREDENTIAL_ID'
                     
-                    def user = User.get(userName)
+                    def user = Jenkins.instance.getUser(userName)
                     def apiTokenProperty = user.getProperty(ApiTokenProperty.class)
-                    def result = apiTokenProperty.tokenStore.generateNewToken(tokenName)
+                    def generatedToken = apiTokenProperty.tokenStore.generateNewToken(tokenName)
+                    
+                    withCredentials([string(credentialsId: tokenName, secretValue: generatedToken.plainValue)]) {
+                        // For example:
+                        sh 'echo "Saved credentials"'
+                    }
                     user.save()
-                    
-                    instance = Jenkins.instance
-                    domain = Domain.global()
-                    store = instance.getExtensionList(
-                    "com.cloudbees.plugins.credentials.SystemCredentialsProvider")[0].getStore()
-                    
-                    def apiKeyCredentials = new org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl(
-                        CredentialsScope.GLOBAL,
-                        'JENKINS_CREDENTIAL_ID',
-                        'API Key Credential',
-                        hudson.util.Secret.fromString(result.plainValue)
-                    )
-
-                    store.addCredentials(domain, apiKeyCredentials)                  
                 }
             }
         }
