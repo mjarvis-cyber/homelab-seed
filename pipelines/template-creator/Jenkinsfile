@@ -4,6 +4,9 @@ pipeline {
             filename 'pipelines/template-creator/Dockerfile'
         }
     }
+    options {
+        disableConcurrentBuilds()
+    }
     parameters {
         string(name: 'PROXMOX_IP', defaultValue: 'cyberops2.pizzasec.com', description: 'ProxMox IP address')
         string(name: 'PROXMOX_NODE', defaultValue: 'cyberops2', description: 'ProxMox to build the templates on')
