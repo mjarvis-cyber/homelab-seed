@@ -237,10 +237,8 @@ def fix_networking(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     endpoint = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
     data={}
     data["ipconfig0"]="ip=dhcp"
-    put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
-    endpoint=f"api2/json/nodes/{proxmox_node}/qemu"
     data["net0"]="virtio,bridge=vmbr1"
-    post_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
+    put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     endpoint = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/template"
