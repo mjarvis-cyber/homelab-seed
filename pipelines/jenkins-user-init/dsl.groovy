@@ -4,7 +4,6 @@ pipelineJob('jenkins-user-init') {
 
     definition {
         cpsScm {
-        cpsScm {
             scm {
                 git {
                     remote {
