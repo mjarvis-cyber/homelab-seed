@@ -319,9 +319,8 @@ def main():
 
     for template_name, template in config['templates'].items():
         ssh_keys_file = f"{template_name}-keys.pub"
-        with open(ssh_keys_file, 'w') as file:
-            file.write("\n".join(template['ssh_keys']))
-
+                with open(ssh_keys_file, 'w') as file:
+            file.write("\n".join(config['ssh_keys']))
         runner(
             proxmox_ip,
             proxmox_node,
