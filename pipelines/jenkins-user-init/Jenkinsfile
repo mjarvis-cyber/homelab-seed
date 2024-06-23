@@ -19,7 +19,7 @@ pipeline {
         
         stage('Create Jenkins API token') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.JENKINS_CREDENTIAL_IDD, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                withCredentials([usernamePassword(credentialsId: env.JENKINS_CREDENTIAL_ID, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     script {
                         def userName = 'jenkins'
                         def user = Jenkins.instance.getUser(userName)
