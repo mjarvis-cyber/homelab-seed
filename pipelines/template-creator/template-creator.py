@@ -11,6 +11,7 @@ import time
 from urllib.parse import quote
 import threading
 from queue import Queue
+from queue import Empty
 
 vmid_lock = threading.Lock()
 storage_lock = threading.Lock()
@@ -342,15 +343,15 @@ def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool, na
 def thread_worker(queue, proxmox_ip, proxmox_node, token_name, token_secret, resource_pool, template_start_id, template_end_id, qcow_dir, ssh_keys, proxmox_user, proxmox_password, temporary_ips_queue, template_ssh_key):
     while True:
         try:
-            template_name, template = queue.get(block=False)
-        except Queue.empty:
+            template_name, template = queue.get_nowait()
+        except Empty:
             break
         
         ssh_keys_file = f"{template_name}-keys.pub"
         with open(ssh_keys_file, 'w') as file:
             file.write("\n".join(ssh_keys))
         
-        temporary_ip = temporary_ips_queue.get()
+        temporary_ip = temporary_ips_queue.pop(0)
         
         runner(
             proxmox_ip,
@@ -369,12 +370,13 @@ def thread_worker(queue, proxmox_ip, proxmox_node, token_name, token_secret, res
             proxmox_user,
             proxmox_password,
             temporary_ip,
-            template_ssh_key,
-            temporary_ips_queue
+            template_ssh_key
         )
         
         queue.task_done()
-        temporary_ips_queue.put(temporary_ip)
+        
+        # Add the temporary_ip back to the list for reuse
+        temporary_ips_queue.append(temporary_ip)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
