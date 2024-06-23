@@ -23,8 +23,10 @@ pipeline {
                     script {
                         def userName = 'jenkins'
                         def user = Jenkins.instance.getUser(userName)
+                        sh "echo ${user}"
                         
-                        def generatedToken = user.getApiToken()
+                        def generatedToken = user.getApi()
+                        sh "echo token: ${generatedToken}"
                         
                         withCredentials([string(credentialsId: env.JENKINS_CREDENTIAL_ID, secretValue: generatedToken)]) {
                             sh 'echo "Saved credentials"'
