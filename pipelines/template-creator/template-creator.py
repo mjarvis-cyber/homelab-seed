@@ -393,13 +393,14 @@ def main():
     proxmox_user = args.user
     proxmox_password = args.password
     template_ssh_key = args.template_ssh_key
-    resource_pool=config['resource_pool']
     print(f"The ssh key: {template_ssh_key}")
     
-    ensure_resource_pool(proxmox_ip, token_name, token_secret, resource_pool)
 
     with open("configs.json", "r") as file:
         config = json.load(file)
+    
+    resource_pool=config['resource_pool']
+    ensure_resource_pool(proxmox_ip, token_name, token_secret, resource_pool)
 
     template_queue = Queue()
     for template_name, template in config['templates'].items():
