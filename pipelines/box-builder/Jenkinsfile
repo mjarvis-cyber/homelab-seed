@@ -1,0 +1,63 @@
+pipeline {
+    agent {
+        dockerfile {
+            filename 'pipelines/template-creator/Dockerfile'
+        }
+    }
+    parameters {
+        string(name: 'PROXMOX_IP', defaultValue: 'cyberops2.pizzasec.com', description: 'ProxMox IP address')
+        string(name: 'PROXMOX_NODE', defaultValue: 'cyberops2', description: 'ProxMox to build the box on')
+        string(name: 'TEMPLATE', defaultValue: 'ubuntu-22', description: 'Name of the template to use')
+        string(name: 'ROLE', defaultValue: 'patron', description: 'Why is this box being built')
+        string(name: 'BRANCH', defaultValue: 'None', description: 'If this is associated with a git branch, assign it')
+        choice(name: 'CORES', choices: ['2', '4', '8'], description: 'Number of cores that will be allocated to the VM')
+        choice(name: 'MEMORY', choices: ['2048', '4096', '8192'], description: 'Memory allocation for the VM in MB')
+    }
+    environment {
+        PROXMOX_API_CREDS   = credentials('proxmox-api-token')
+        PROXMOX_SSH_CREDS   = credentials('root-proxmox')
+        PROXMOX_LOW_VMID    = "400"
+        PROXMOX_HIGH_VMID   = "600"
+    }
+    stages {
+        stage('Parameter Validation') {
+            steps {
+                script {
+                    if (!params.ROLE.matches('^[a-zA-Z0-9._-]+$')) {
+                        error("Invalid ROLE parameter. Only letters, numbers, '.', '_' and '-' are allowed.")
+                    }
+                    if (!params.BRANCH.matches('^[a-zA-Z0-9._-]+$')) {
+                        error("Invalid BRANCH parameter. Only letters, numbers, '.', '_' and '-' are allowed.")
+                    }
+                }
+            }
+        }
+        
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/master']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    userRemoteConfigs: [[url: 'https://github.com/OrangeSquirter/homelab-seed.git']]
+                ])
+            }
+        }
+        
+        stage('Build Box') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                    script {
+                        dir('pipelines/box-builder') {
+                            def token_name = PROXMOX_API_CREDS.split(':')[0]
+                            def token_secret = PROXMOX_API_CREDS.split(':')[1]
+                            def proxmox_user = PROXMOX_SSH_CREDS.split(':')[0]
+                            def proxmox_password = PROXMOX_SSH_CREDS.split(':')[1]
+                            def template_ssh_key = "${SSH_KEY}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

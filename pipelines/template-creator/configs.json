@@ -48,6 +48,11 @@
             "password": "password1!",
             "img_url": "https://cloud-images.ubuntu.com/releases/24.04/release-20240423/ubuntu-24.04-server-cloudimg-amd64.img"
         },
+        "rhel-8.4-oldest": {
+            "user": "centos",
+            "password": "password1!",
+            "img_url": "https://archive.org/download/rhel-8.4-x86_64-resources/rhel-8.4-x86_64-kvm.qcow2"
+        },
 		"alma-8-template": {
 			"user": "alma",
 			"password": "password1!",
