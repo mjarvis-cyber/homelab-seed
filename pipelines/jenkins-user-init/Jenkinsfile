@@ -1,6 +1,10 @@
 pipeline {
     agent any
     
+    environment {
+        JENKINS_CREDENTIAL_ID = 'JENKINS_CREDENTIALS'
+    }
+    
     stages {
         stage('Checkout') {
             steps {
@@ -15,19 +19,17 @@ pipeline {
         
         stage('Create Jenkins API token') {
             steps {
-                script {
-                    def userName = 'jenkins'
-                    def tokenName = 'JENKINS_CREDENTIAL_ID'
-                    
-                    def user = Jenkins.instance.getUser(userName)
-                    def apiTokenProperty = user.getProperty(ApiTokenProperty.class)
-                    def generatedToken = apiTokenProperty.tokenStore.generateNewToken(tokenName)
-                    
-                    withCredentials([string(credentialsId: tokenName, secretValue: generatedToken.plainValue)]) {
-                        // For example:
-                        sh 'echo "Saved credentials"'
+                withCredentials([usernamePassword(credentialsId: env.JENKINS_CREDENTIAL_IDD, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    script {
+                        def userName = 'jenkins'
+                        def user = Jenkins.instance.getUser(userName)
+                        
+                        def generatedToken = user.getApiToken()
+                        
+                        withCredentials([string(credentialsId: env.JENKINS_CREDENTIAL_ID, secretValue: generatedToken)]) {
+                            sh 'echo "Saved credentials"'
+                        }
                     }
-                    user.save()
                 }
             }
         }
