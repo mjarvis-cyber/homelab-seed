@@ -7,10 +7,12 @@ import os
 import shutil
 import paramiko
 from scp import SCPClient
-import uuid
 import time
-import urllib.parse
 from urllib.parse import quote
+import threading
+from queue import Queue
+
+vmid_lock = threading.Lock()
 
 def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret):
     api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
@@ -123,6 +125,7 @@ def pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end):
         if vmid not in used_vmids:
             return vmid
     raise ValueError("No available VMID found in the specified range")
+    pass
 
 def get_qcow(image_url, qcow_dir, qcow_file, name):
     os.makedirs(qcow_dir, exist_ok=True)
@@ -288,11 +291,44 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmi
 
     print("Converting to template")
     make_template(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
+    pass
 
-def runner(proxmox_ip, proxmox_node, token_name, token_secret, resource_pool_name, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key):
+def runner(proxmox_ip, proxmox_node, token_name, token_secret, name, vmid_start, vmid_end, qcow_dir, ssh_keys, image_location, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key):
     vmid = pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end)
     print(f"Here is the vmid to use: {vmid}")
     vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, vmid, name, image_location, ssh_keys, qcow_dir, user, password, proxmox_user, proxmox_password, ip_to_use, template_ssh_key)
+
+def thread_worker(queue, proxmox_ip, proxmox_node, token_name, token_secret, template_start_id, template_end_id, qcow_dir, ssh_keys, proxmox_user, proxmox_password, temporary_ips, template_ssh_key):
+    while not queue.empty():
+        template_name, template = queue.get()
+        ssh_keys_file = f"{template_name}-keys.pub"
+        with open(ssh_keys_file, 'w') as file:
+            file.write("\n".join(ssh_keys))
+        
+        temporary_ip = temporary_ips.pop(0)
+        
+        runner(
+            proxmox_ip,
+            proxmox_node,
+            token_name,
+            token_secret,
+            template_name,
+            template_start_id,
+            template_end_id,
+            qcow_dir,
+            ssh_keys_file,
+            template['img_url'],
+            template['user'],
+            template['password'],
+            proxmox_user,
+            proxmox_password,
+            temporary_ip,
+            template_ssh_key
+        )
+        
+        queue.task_done()
+        
+        temporary_ips.append(temporary_ip)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
@@ -318,29 +354,42 @@ def main():
     with open("configs.json", "r") as file:
         config = json.load(file)
 
+    template_queue = Queue()
     for template_name, template in config['templates'].items():
-        ssh_keys_file = f"{template_name}-keys.pub"
-        with open(ssh_keys_file, 'w') as file:
-            file.write("\n".join(config['ssh_keys']))
-        runner(
+        template_queue.put((template_name, template))
+
+    temporary_ips = [
+        config['temporary_ip_1'],
+        config['temporary_ip_2'],
+        config['temporary_ip_3'],
+        config['temporary_ip_4'],
+        config['temporary_ip_5']
+    ]
+
+    threads = []
+    for _ in range(len(config['templates'])):
+        thread = threading.Thread(target=thread_worker, args=(
+            template_queue,
             proxmox_ip,
             proxmox_node,
             token_name,
             token_secret,
-            config['resource_pool'],
-            template_name,
             config['template_start_id'],
             config['template_end_id'],
             config['qcow_dir'],
-            ssh_keys_file,
-            template['img_url'],
-            template['user'],
-            template['password'],
+            config['ssh_keys'],
             proxmox_user,
             proxmox_password,
-            config['temporary_ip'],
+            temporary_ips,
             template_ssh_key
-        )
+        ))
+        thread.start()
+        threads.append(thread)
+
+    template_queue.join()
+
+    for thread in threads:
+        thread.join()
 
 if __name__ == "__main__":
     main()
