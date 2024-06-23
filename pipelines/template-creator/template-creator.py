@@ -224,10 +224,6 @@ def configure_custom(proxmox_ip, proxmox_node, token_name, token_secret, vmid, u
         print(f"Failed to execute {remote_filename} on {ip_to_use}")
         return
     stdin, stdout, stderr = ssh.exec_command(f'sudo shutdown now')
-    exit_status = stdout.channel.recv_exit_status()
-    if exit_status != 0:
-        print(f"Failed to shut down")
-        return
     time.sleep(20)
 
 def fix_networking(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
