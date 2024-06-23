@@ -13,6 +13,7 @@ import threading
 from queue import Queue
 
 vmid_lock = threading.Lock()
+storage_lock = threading.Lock()
 
 def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret):
     api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
@@ -311,7 +312,8 @@ def vm_creation_pipeline(proxmox_ip, proxmox_node, token_name, token_secret, res
 
     print(f"Uploading {qcow_file} to proxmox")
     print("Uploading the qcow, this could take a while")
-    upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir, vmid, name)
+    with storage_lock:
+        upload_qcow(proxmox_ip, proxmox_node, proxmox_user, proxmox_password, qcow_file, remote_dir, vmid, name)
     time.sleep(5)
     os.remove(qcow_file)
     print("Configuring disk on template")
