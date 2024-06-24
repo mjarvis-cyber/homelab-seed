@@ -211,7 +211,7 @@ def configure_custom(proxmox_ip, proxmox_node, token_name, token_secret, vmid, u
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
     start_endpoint=f"/api2/json/nodes/{proxmox_node}/qemu/{vmid}/status/start"
     post_cluster_query(cluster_query=start_endpoint, data=None, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
-    time.sleep(300) # box needs time to spin up
+    time.sleep(180) # box needs time to spin up
     ssh = create_ssh_client(ip_address, 22, user, key_file=ssh_key_file)
     scp = SCPClient(ssh.get_transport())
 
@@ -387,6 +387,7 @@ def main():
     parser.add_argument("--user", required=True, help="Proxmox SSH user")
     parser.add_argument("--password", required=True, help="Proxmox SSH password")
     parser.add_argument("--template_ssh_key", required=True, help="Path to the private SSH key")
+    parser.add_argument("--concurrency", type=int, default=5, help="Number of concurrent threads")
 
     args = parser.parse_args()
 
@@ -397,13 +398,14 @@ def main():
     proxmox_user = args.user
     proxmox_password = args.password
     template_ssh_key = args.template_ssh_key
+    concurrency = args.concurrency
+
     print(f"The ssh key: {template_ssh_key}")
-    
 
     with open("configs.json", "r") as file:
         config = json.load(file)
     
-    resource_pool=config['resource_pool']
+    resource_pool = config['resource_pool']
     ensure_resource_pool(proxmox_ip, token_name, token_secret, resource_pool)
 
     template_queue = Queue()
@@ -421,7 +423,7 @@ def main():
         temporary_ips_queue.put(ip)
 
     threads = []
-    for _ in range(len(config['templates'])):
+    for _ in range(min(concurrency, len(config['templates']))):
         thread = threading.Thread(target=thread_worker, args=(
             template_queue,
             proxmox_ip,
