@@ -123,8 +123,8 @@ def main():
     template_name   = args.template_name
     try:
         create_box(proxmox_ip, proxmox_node, token_name, token_secret, low_vmid, high_vmid, template_name)
-    except:
-        print(f"Failed to provision resource, attempting to delete it")
+    except Exception as E:
+        print(f"Failed to provision resource, attempting to delete it: {E}")
 
 if __name__ == "__main__":
     main()
