@@ -101,7 +101,7 @@ def clone_template(proxmox_ip, proxmox_node, token_name, token_secret, template_
     return response
     
 
-def create_box(proxmox_ip, proxmox_node, token_name, token_secret, low_vmid, high_vmid, template_name):
+def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role):
     print(f"Picking a VMID between {low_vmid} and {high_vmid}")
     vmid_to_use=pick_vmid(proxmox_ip, token_name, token_secret, low_vmid, high_vmid)
     print(f"Picked VMID {vmid_to_use} on {proxmox_node}")
@@ -112,6 +112,7 @@ def create_box(proxmox_ip, proxmox_node, token_name, token_secret, low_vmid, hig
         SystemExit
     else:
         print(f"Proceeding to build VM {vmid_to_use} on {proxmox_node}, based on {template_vmid}")
+        clone_template(proxmox_ip, proxmox_node, token_name, token_secret, template_vmid, vmid_to_use, vm_name, proxmox_pool)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
@@ -123,19 +124,23 @@ def main():
     parser.add_argument("--low_vmid", required=True, help="The lowest VMID in the pool to use")
     parser.add_argument("--high_vmid", required=True, help="The highest VMID in the pool to use")
     parser.add_argument("--template_name", required=True, help="The name of the template to use")
+    parser.add_argument("--vm_name", required=True, help="The name of the VM to create")
+    parser.add_argument("--vm_role", required=True, help="The role of the VM to create")
 
     args = parser.parse_args()
     proxmox_ip      = args.proxmox_ip
     proxmox_node    = args.proxmox_node
+    proxmox_pool    = args.proxmox_pool
     token_name      = args.token_name
     token_secret    = args.token_secret
     low_vmid        = args.low_vmid
     high_vmid       = args.high_vmid
     template_name   = args.template_name
-    #try:
-    create_box(proxmox_ip, proxmox_node, token_name, token_secret, low_vmid, high_vmid, template_name)
-    #except Exception as E:
-    #    print(f"Failed to provision resource, attempting to delete it: {E}")
+    vm_name         = args.vm_name
+    vm_role         = args.vm_role
+    
+    create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role)
+
 
 if __name__ == "__main__":
     main()
