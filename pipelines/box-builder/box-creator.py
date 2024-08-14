@@ -99,9 +99,54 @@ def clone_template(proxmox_ip, proxmox_node, token_name, token_secret, template_
     response = post_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret)
     
     return response
-    
 
-def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role):
+def check_pool(proxmox_ip, token_name, token_secret, pool_name):
+    # check if pool exists already
+    endpoint = "api2/json/pools"
+    response = get_cluster_query_output(endpoint, proxmox_ip, token_name, token_secret)
+    
+    existing_pools = response.get('data', [])
+    
+    if not existing_pools:
+        print(f"No pools found.")
+        return False
+    
+    pool_ids = [pool.get('poolid', '') for pool in existing_pools]
+    
+    if pool_name in pool_ids:
+        print(f"Pool '{pool_name}' already exists.")
+        return True
+    else:
+        print(f"Pool {pool_name} not found")
+        return False
+
+def create_pool(proxmox_ip, token_name, token_secret, pool_name):
+    endpoint = "api2/json/pools"
+    data={}
+    data["poolid"]=pool_name
+    post_cluster_query(cluster_query=endpoint, data=data, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
+
+def ensure_resource_pool(proxmox_ip, token_name, token_secret, pool_name):
+    exists = check_pool(proxmox_ip, token_name, token_secret, pool_name)
+    if not exists:
+        create_pool(proxmox_ip, token_name, token_secret, pool_name)    
+
+def configure_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, cores, memory, network):
+    endpoint=f"api2/json/nodes/{proxmox_node}/qemu{vmid}/config"
+    data={}
+    data["cores"]=cores
+    data["memory"]={memory}
+    data["net0"]=f"virtio,bridge={network}"
+    post_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
+
+def resize_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_storage):
+    endpoint=f"api2/json/nodes/{proxmox_node}/qemu{vmid_to_use}/resize"
+    data={}
+    data["disk"]="virtio0"
+    data["size"]=f"{vm_storage}G"
+    put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
+
+def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network):
     print(f"Picking a VMID between {low_vmid} and {high_vmid}")
     vmid_to_use=pick_vmid(proxmox_ip, token_name, token_secret, low_vmid, high_vmid)
     print(f"Picked VMID {vmid_to_use} on {proxmox_node}")
@@ -112,7 +157,11 @@ def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret,
         SystemExit
     else:
         print(f"Proceeding to build VM {vmid_to_use} on {proxmox_node}, based on {template_vmid}")
-        clone_template(proxmox_ip, proxmox_node, token_name, token_secret, template_vmid, vmid_to_use, vm_name, proxmox_pool)
+    print(f"Ensuring the resource pool {proxmox_pool} exists")
+    ensure_resource_pool(proxmox_ip, token_name, token_secret, proxmox_pool)
+    clone_template(proxmox_ip, proxmox_node, token_name, token_secret, template_vmid, vmid_to_use, vm_name, proxmox_pool)
+    configure_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_cores, vm_memory, vm_network)
+    resize_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_storage)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
@@ -126,6 +175,10 @@ def main():
     parser.add_argument("--template_name", required=True, help="The name of the template to use")
     parser.add_argument("--vm_name", required=True, help="The name of the VM to create")
     parser.add_argument("--vm_role", required=True, help="The role of the VM to create")
+    parser.add_argument("--vm_cores", required=True, help="Number of cores for the VM")
+    parser.add_argument("--vm_memory", required=True, help="Memory for the VM")
+    parser.add_argument("--vm_storage", required=True, help="Amount of storage, in GB")
+    parser.add_argument("--vm_network", required=True, help="interface to attach to the VM")
 
     args = parser.parse_args()
     proxmox_ip      = args.proxmox_ip
@@ -138,8 +191,12 @@ def main():
     template_name   = args.template_name
     vm_name         = args.vm_name
     vm_role         = args.vm_role
+    vm_cores        = args.vm_cores
+    vm_memory       = args.vm_memory
+    vm_storage      = args.vm_storage
+    vm_network      = args.vm_network
     
-    create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role)
+    create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network)
 
 
 if __name__ == "__main__":

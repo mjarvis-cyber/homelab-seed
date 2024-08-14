@@ -15,6 +15,7 @@ pipeline {
         string(name: 'VM_NAME', defaultValue: 'incubator', description: 'Name of the box to build')
         string(name: 'ROLE', defaultValue: 'patron', description: 'Why is this box being built')
         string(name: 'BRANCH', defaultValue: 'None', description: 'If this is associated with a git branch, assign it')
+        choice(name: 'NETWORK', choices: ['patron', 'vmbr0', 'vmbr1'], description: 'Network to place the VM on')
     }
     environment {
         PROXMOX_API_CREDS   = credentials('proxmox-api-token')
@@ -67,7 +68,11 @@ pipeline {
                                 --high_vmid     ${PROXMOX_HIGH_VMID} \
                                 --template_name ${params.TEMPLATE} \
                                 --vm_name       ${params.VM_NAME} \
-                                --vm_role       ${params.ROLE}
+                                --vm_role       ${params.ROLE} \
+                                --vm_cores      ${params.CORES} \
+                                --vm_memory     ${params.MEMORY} \
+                                --vm_storage    ${params.STORAGE} \
+                                --vm_network    ${params.NETWORK}
                                 
                         """
                     }
