@@ -140,11 +140,23 @@ def configure_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, cores
     post_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
 def resize_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_storage):
-    endpoint=f"api2/json/nodes/{proxmox_node}/qemu{vmid_to_use}/resize"
+    endpoint=f"api2/json/nodes/{proxmox_node}/qemu/{vmid_to_use}/resize"
     data={}
     data["disk"]="virtio0"
     data["size"]=f"{vm_storage}G"
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
+
+def is_vmid_locked(proxmox_ip, proxmox_node, token_name, token_secret, vm_id):
+    cluster_query = f"api2/json/nodes/{proxmox_node}/qemu/{vm_id}/status/current"
+    vm_status = get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret)
+    return 'lock' in vm_status['data']
+
+def wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vm_id, check_interval=10):
+    while is_vmid_locked(proxmox_ip, proxmox_node, token_name, token_secret, vm_id):
+        print(f"VMID {vm_id} is locked. Waiting for {check_interval} seconds...")
+        time.sleep(check_interval)
+    
+    print(f"VMID {vm_id} is no longer locked.")
 
 def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network):
     print(f"Picking a VMID between {low_vmid} and {high_vmid}")
@@ -160,8 +172,11 @@ def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret,
     print(f"Ensuring the resource pool {proxmox_pool} exists")
     ensure_resource_pool(proxmox_ip, token_name, token_secret, proxmox_pool)
     clone_template(proxmox_ip, proxmox_node, token_name, token_secret, template_vmid, vmid_to_use, vm_name, proxmox_pool)
+    wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
     configure_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_cores, vm_memory, vm_network)
+    wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
     resize_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_storage)
+    wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
