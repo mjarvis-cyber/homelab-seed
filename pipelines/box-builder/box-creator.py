@@ -132,7 +132,7 @@ def ensure_resource_pool(proxmox_ip, token_name, token_secret, pool_name):
         create_pool(proxmox_ip, token_name, token_secret, pool_name)    
 
 def configure_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, cores, memory, network):
-    endpoint=f"api2/json/nodes/{proxmox_node}/qemu{vmid}/config"
+    endpoint=f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
     data={}
     data["cores"]=cores
     data["memory"]={memory}
