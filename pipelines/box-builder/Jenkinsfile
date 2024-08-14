@@ -56,7 +56,7 @@ pipeline {
                         def token_secret = PROXMOX_API_CREDS.split(':')[1]
                         sh """
                             echo "Build a VM"
-                            python box-creatior.py \
+                            python box-creator.py \
                                 --proxmox_ip    ${params.PROXMOX_IP} \
                                 --proxmox_node  ${params.PROXMOX_NODE} \
                                 --proxmox_pool  ${params.PROXMOX_POOL}
