@@ -7,6 +7,7 @@ pipeline {
     parameters {
         string(name: 'PROXMOX_IP', defaultValue: 'cyberops2.pizzasec.com', description: 'ProxMox IP address')
         string(name: 'PROXMOX_NODE', defaultValue: 'cyberops2', description: 'ProxMox to build the box on')
+        string(name: 'PROXMOX_POOL', defaultValue: 'patron', description: 'ProxMox resource pool to assign')
         string(name: 'TEMPLATE', defaultValue: 'ubuntu-22', description: 'Name of the template to use')
         choice(name: 'CORES', choices: ['2', '4', '8'], description: 'Number of cores that will be allocated to the VM')
         choice(name: 'MEMORY', choices: ['2048', '4096', '8192'], description: 'Memory allocation for the VM in MB')
@@ -54,15 +55,16 @@ pipeline {
                         def token_name = PROXMOX_API_CREDS.split(':')[0]
                         def token_secret = PROXMOX_API_CREDS.split(':')[1]
                         sh """
-                            python box-builder.py \
+                            echo "Build a VM"
+                            python box-creatior.py \
                                 --proxmox_ip    ${params.PROXMOX_IP} \
                                 --proxmox_node  ${params.PROXMOX_NODE} \
+                                --proxmox_pool  ${params.PROXMOX_POOL}
                                 --token_name    ${token_name} \
                                 --token_secret  ${token_secret} \
                                 --low_vmid      ${PROXMOX_LOW_VMID} \
-                                --high_vmid     ${PROXMOX_HIGH_VMID}
-                                --template_name ${params.TEMPLATE} \
-                                --
+                                --high_vmid     ${PROXMOX_HIGH_VMID} \
+                                --template_name ${params.TEMPLATE}
                                 
                         """
                     }
