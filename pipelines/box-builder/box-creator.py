@@ -158,6 +158,10 @@ def wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vm_
     
     print(f"VMID {vm_id} is no longer locked.")
 
+def start_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
+    start_endpoint=f"/api2/json/nodes/{proxmox_node}/qemu/{vmid}/status/start"
+    post_cluster_query(cluster_query=start_endpoint, data=None, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
+
 def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network):
     print(f"Picking a VMID between {low_vmid} and {high_vmid}")
     vmid_to_use=pick_vmid(proxmox_ip, token_name, token_secret, low_vmid, high_vmid)
@@ -177,6 +181,7 @@ def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret,
     wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
     resize_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_storage)
     wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
+    start_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
 
 def main():
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
@@ -210,8 +215,9 @@ def main():
     vm_memory       = args.vm_memory
     vm_storage      = args.vm_storage
     vm_network      = args.vm_network
-    
+    print(f"HAJIME!")
     create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network)
+    print(f"DUNZO!!!")
 
 
 if __name__ == "__main__":
