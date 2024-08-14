@@ -12,7 +12,7 @@ pipeline {
         choice(name: 'CORES', choices: ['2', '4', '8'], description: 'Number of cores that will be allocated to the VM')
         choice(name: 'MEMORY', choices: ['2048', '4096', '8192'], description: 'Memory allocation for the VM in MB')
         string(name: 'STORAGE', defaultValue: '20', description: 'Storage for the VM in GB')
-        string(name: 'VM_NAME', defaultValue: 'box-creator specimen', description: 'Name of the box to build')
+        string(name: 'VM_NAME', defaultValue: 'incubator', description: 'Name of the box to build')
         string(name: 'ROLE', defaultValue: 'patron', description: 'Why is this box being built')
         string(name: 'BRANCH', defaultValue: 'None', description: 'If this is associated with a git branch, assign it')
     }
