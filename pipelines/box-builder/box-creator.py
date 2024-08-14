@@ -89,7 +89,16 @@ def find_template(proxmox_ip, proxmox_node, token_name, token_secret, template_n
     
     return None
 
-#def clone_template(proxmox_ip, token_name, token_secret, template_vmid, vm_id, pool):
+def clone_template(proxmox_ip, proxmox_node, token_name, token_secret, template_vmid, vm_id, vm_name, pool):
+    cluster_query = f"api2/json/nodes/{proxmox_node}/qemu/{template_vmid}/clone"
+    data = {
+        "newid": vm_id,
+        "name": vm_name,
+        "pool": pool
+    }
+    response = post_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret)
+    
+    return response
     
 
 def create_box(proxmox_ip, proxmox_node, token_name, token_secret, low_vmid, high_vmid, template_name):
