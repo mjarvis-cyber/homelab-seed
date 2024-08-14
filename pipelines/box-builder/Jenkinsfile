@@ -59,7 +59,7 @@ pipeline {
                             python box-creator.py \
                                 --proxmox_ip    ${params.PROXMOX_IP} \
                                 --proxmox_node  ${params.PROXMOX_NODE} \
-                                --proxmox_pool  ${params.PROXMOX_POOL}
+                                --proxmox_pool  ${params.PROXMOX_POOL} \
                                 --token_name    ${token_name} \
                                 --token_secret  ${token_secret} \
                                 --low_vmid      ${PROXMOX_LOW_VMID} \
