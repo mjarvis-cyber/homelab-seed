@@ -69,6 +69,8 @@ def get_vm_metadata(proxmox_ip, token_name, token_secret):
 
 def pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end):
     time.sleep(5) # time for proxmox to do stuff
+    vmid_start = int(vmid_start)
+    vmid_end = int(vmid_end)
     vm_metadata = get_vm_metadata(proxmox_ip, token_name, token_secret)
     used_vmids = vm_metadata.keys()
     for vmid in range(vmid_start, vmid_end + 1):
