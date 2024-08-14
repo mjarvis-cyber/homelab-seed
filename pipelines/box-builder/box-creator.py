@@ -121,10 +121,10 @@ def main():
     low_vmid        = args.low_vmid
     high_vmid       = args.high_vmid
     template_name   = args.template_name
-    try:
-        create_box(proxmox_ip, proxmox_node, token_name, token_secret, low_vmid, high_vmid, template_name)
-    except Exception as E:
-        print(f"Failed to provision resource, attempting to delete it: {E}")
+    #try:
+    create_box(proxmox_ip, proxmox_node, token_name, token_secret, low_vmid, high_vmid, template_name)
+    #except Exception as E:
+    #    print(f"Failed to provision resource, attempting to delete it: {E}")
 
 if __name__ == "__main__":
     main()
