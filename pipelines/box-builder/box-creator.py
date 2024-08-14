@@ -92,7 +92,7 @@ def find_template(proxmox_ip, proxmox_node, token_name, token_secret, template_n
 
 def create_box(proxmox_ip, proxmox_node, token_name, token_secret, low_vmid, high_vmid, template_name):
     print(f"Picking a VMID between {low_vmid} and {high_vmid}")
-    vmid_to_use=proxmox_ip, token_name, token_secret, low_vmid, high_vmid
+    vmid_to_use=pick_vmid(proxmox_ip, token_name, token_secret, low_vmid, high_vmid)
     print(f"Picked VMID {vmid_to_use} on {proxmox_node}")
     print(f"Finding the VMID of the {template_name} template on {proxmox_node}")
     template_vmid=find_template(proxmox_ip, proxmox_node, token_name, token_secret, template_name)
