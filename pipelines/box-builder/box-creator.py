@@ -109,7 +109,7 @@ def main():
     parser.add_argument("--proxmox_pool", required=True, help="Proxmox resource pool to build the box in")
     parser.add_argument("--token_name", required=True, help="Proxmox API token name")
     parser.add_argument("--token_secret", required=True, help="Proxmox API token secret")
-    parser.add_argument("--low_vmid ", required=True, help="The lowest VMID in the pool to use")
+    parser.add_argument("--low_vmid", required=True, help="The lowest VMID in the pool to use")
     parser.add_argument("--high_vmid", required=True, help="The highest VMID in the pool to use")
     parser.add_argument("--template_name", required=True, help="The name of the template to use")
 
