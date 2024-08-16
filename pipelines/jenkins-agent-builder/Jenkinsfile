@@ -1,7 +1,7 @@
 pipeline {
     agent {
         dockerfile {
-            filename 'pipelines/box-builder/Dockerfile'
+            filename 'pipelines/jenkins-agent-builder/Dockerfile'
         }
     }
     options {
@@ -10,15 +10,15 @@ pipeline {
     parameters {
         string(name: 'PROXMOX_IP', defaultValue: 'cyberops2.pizzasec.com', description: 'ProxMox IP address')
         string(name: 'PROXMOX_NODE', defaultValue: 'cyberops2', description: 'ProxMox to build the box on')
-        string(name: 'PROXMOX_POOL', defaultValue: 'Patron', description: 'ProxMox resource pool to assign')
+        string(name: 'PROXMOX_POOL', defaultValue: 'Admin', description: 'ProxMox resource pool to assign')
         string(name: 'TEMPLATE', defaultValue: 'ubuntu-22', description: 'Name of the template to use')
         choice(name: 'CORES', choices: ['2', '4', '8'], description: 'Number of cores that will be allocated to the VM')
         choice(name: 'MEMORY', choices: ['2048', '4096', '8192'], description: 'Memory allocation for the VM in MB')
         string(name: 'STORAGE', defaultValue: '20', description: 'Storage for the VM in GB')
-        string(name: 'VM_NAME', defaultValue: 'incubator', description: 'Name of the box to build')
-        string(name: 'ROLE', defaultValue: 'patron', description: 'Why is this box being built')
-        string(name: 'BRANCH', defaultValue: 'None', description: 'If this is associated with a git branch, assign it')
-        choice(name: 'NETWORK', choices: ['patron', 'vmbr0', 'vmbr1'], description: 'Network to place the VM on')
+        string(name: 'VM_NAME', defaultValue: 'jenkins-agent', description: 'Name of the box to build')
+        string(name: 'ROLE', defaultValue: 'jenkins', description: 'Why is this box being built')
+        string(name: 'BRANCH', defaultValue: 'master', description: 'If this is associated with a git branch, assign it')
+        choice(name: 'NETWORK', choices: ['vmbr0', 'vmbr1', 'patron'], description: 'Network to place the VM on')
     }
     environment {
         PROXMOX_API_CREDS   = credentials('proxmox-api-token')
@@ -56,38 +56,28 @@ pipeline {
         stage('Build Box') {
             steps {
                 script {
-                    dir('pipelines/box-builder') {
-                        def token_name = PROXMOX_API_CREDS.split(':')[0]
-                        def token_secret = PROXMOX_API_CREDS.split(':')[1]
-                        sh """
-                            echo "Build a VM"
-                            python box-creator.py \
-                                --proxmox_ip    ${params.PROXMOX_IP} \
-                                --proxmox_node  ${params.PROXMOX_NODE} \
-                                --proxmox_pool  ${params.PROXMOX_POOL} \
-                                --token_name    ${token_name} \
-                                --token_secret  ${token_secret} \
-                                --low_vmid      ${PROXMOX_LOW_VMID} \
-                                --high_vmid     ${PROXMOX_HIGH_VMID} \
-                                --template_name "${params.TEMPLATE}" \
-                                --vm_name       "${params.VM_NAME}" \
-                                --vm_role       "${params.ROLE}" \
-                                --vm_branch     "${params.BRANCH}" \
-                                --vm_cores      ${params.CORES} \
-                                --vm_memory     ${params.MEMORY} \
-                                --vm_storage    ${params.STORAGE} \
-                                --vm_network    ${params.NETWORK}
-                        """
-                    }
-                }
-            }
-        }
-    }
-    post {
-        success {
-            script {
-                dir('pipelines/box-builder') {
-                    archiveArtifacts artifacts: "vm_metadata.json", onlyIfSuccessful: true
+                    def buildbox = build job: 'box-builder', 
+                        parameters: [
+                            string(name: 'PROXMOX_IP',      value: params.PROXMOX_IP),
+                            string(name: 'PROXMOX_NODE',    value: params.PROXMOX_NODE),
+                            string(name: 'PROXMOX_POOL',    value: params.PROXMOX_POOL),
+                            string(name: 'TEMPLATE',        value: params.TEMPLATE),
+                            string(name: 'CORES',           value: params.CORES),
+                            string(name: 'MEMORY',          value: params.MEMORY),
+                            string(name: 'STORAGE',         value: params.STORAGE),
+                            string(name: 'VM_NAME',         value: params.VM_NAME),
+                            string(name: 'ROLE',            value: params.ROLE),
+                            string(name: 'BRANCH',          value: params.BRANCH),
+                            string(name: 'NETWORK',         value: params.NETWORK)
+                        ], 
+                        propagate: true, 
+                        wait: true
+
+                    copyArtifacts(
+                        projectName: 'box-builder', 
+                        selector: specific("${buildbox.number}"),
+                        filter: 'vm_metadata.json'
+                    )
                 }
             }
         }
