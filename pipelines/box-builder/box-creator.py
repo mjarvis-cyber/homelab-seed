@@ -1,6 +1,7 @@
 import argparse
 import requests
 import time
+import json
 
 def get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret):
     api_url = f"https://{proxmox_ip}:8006/{cluster_query}"
@@ -68,7 +69,6 @@ def get_vm_metadata(proxmox_ip, token_name, token_secret):
     return vm_data
 
 def pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end):
-    time.sleep(5) # time for proxmox to do stuff
     vmid_start = int(vmid_start)
     vmid_end = int(vmid_end)
     vm_metadata = get_vm_metadata(proxmox_ip, token_name, token_secret)
@@ -81,8 +81,6 @@ def pick_vmid(proxmox_ip, token_name, token_secret, vmid_start, vmid_end):
 def find_template(proxmox_ip, proxmox_node, token_name, token_secret, template_name):
     cluster_query = f"api2/json/nodes/{proxmox_node}/qemu"
     vms = get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret)
-    
-    # Iterate through the VMs to find the one that matches the template name and is marked as a template
     for vm in vms['data']:
         if vm['name'] == template_name and vm.get('template', 0) == 1:
             return vm['vmid']
@@ -162,6 +160,18 @@ def start_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     start_endpoint=f"/api2/json/nodes/{proxmox_node}/qemu/{vmid}/status/start"
     post_cluster_query(cluster_query=start_endpoint, data=None, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
 
+def get_vm_ip(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
+    cluster_query = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/agent/network-get-interfaces"
+    response = get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret)
+    
+    # Iterate through interfaces to find the IP address
+    for interface in response['data']['result']:
+        for ip in interface.get('ip-addresses', []):
+            if ip['ip-address-type'] == 'ipv4':
+                return ip['ip-address']
+    
+    return None
+
 def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network):
     print(f"Picking a VMID between {low_vmid} and {high_vmid}")
     vmid_to_use=pick_vmid(proxmox_ip, token_name, token_secret, low_vmid, high_vmid)
@@ -182,8 +192,33 @@ def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret,
     resize_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_storage)
     wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
     start_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
+    return vmid_to_use
+
+def write_file(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network, vmid, ip, file_name):
+    output_data = {
+        "proxmox_ip": proxmox_ip,
+        "proxmox_node": proxmox_node,
+        "proxmox_pool": proxmox_pool,
+        "token_name": token_name,
+        "token_secret": token_secret,
+        "low_vmid": low_vmid,
+        "high_vmid": high_vmid,
+        "template_name": template_name,
+        "vm_name": vm_name,
+        "vm_role": vm_role,
+        "vm_cores": vm_cores,
+        "vm_memory": vm_memory,
+        "vm_storage": vm_storage,
+        "vm_network": vm_network,
+        "vmid": vmid,
+        "vm_ip": ip
+    }
+    with open(file_name, 'w') as json_file:
+        json.dump(output_data, json_file, indent=4)
+    
 
 def main():
+    print(f"HAJIME!")
     parser = argparse.ArgumentParser(description="Create Proxmox templates")
     parser.add_argument("--proxmox_ip", required=True, help="Proxmox IP address")
     parser.add_argument("--proxmox_node", required=True, help="Proxmox host to build the box on")
@@ -215,8 +250,14 @@ def main():
     vm_memory       = args.vm_memory
     vm_storage      = args.vm_storage
     vm_network      = args.vm_network
-    print(f"HAJIME!")
-    create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network)
+    vmid=create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network)
+    print("Sleep for a minute to allow the box to bootstrap")
+    time.sleep(60)
+    file_name="vm_metadata.json"
+    vm_ip = get_vm_ip(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
+    print(f"VM IP: {vm_ip}")
+    write_file(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network, vmid, vm_ip, file_name)
+    print(f"Wrote VM data to {file_name}")
     print(f"DUNZO!!!")
 
 

@@ -73,9 +73,17 @@ pipeline {
                                 --vm_memory     ${params.MEMORY} \
                                 --vm_storage    ${params.STORAGE} \
                                 --vm_network    ${params.NETWORK}
-                                
                         """
                     }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            script {
+                dir('pipelines/box-builder') {
+                    archiveArtifacts artifacts: "vm_metadata.json", onlyIfSuccessful: true
                 }
             }
         }
