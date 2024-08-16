@@ -145,16 +145,17 @@ def resize_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use,
     data["size"]=f"{vm_storage}G"
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
-def tag_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, tag_key, vm_role):
+def tag_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, vm_role, vm_branch):
     sanitized_role = re.sub(r'[^a-zA-Z0-9]', '-', vm_role)
-    role_tag = f"{tag_key}.{sanitized_role}"
+    sanitized_branch = re.sub(r'[^a-zA-Z0-9]', '-', vm_branch)
+    tags = f"role.{sanitized_role},branch.{sanitized_branch}"
     cluster_query = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
     data = {
-        "tags": role_tag
+        "tags": tags
     }
     response = put_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret)
     
-    print(f"Tagged VM {vmid} with {role_tag}")
+    print(f"Tagged VM {vmid} with {tags}")
     return response
 
 def is_vmid_locked(proxmox_ip, proxmox_node, token_name, token_secret, vm_id):
@@ -206,8 +207,7 @@ def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret,
     wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
     resize_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_storage)
     wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
-    tag_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, 'role', vm_role)
-    tag_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, 'branch', vm_branch)
+    tag_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_role, vm_branch)
     start_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
     wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
     return vmid_to_use
