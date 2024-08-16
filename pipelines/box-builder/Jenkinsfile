@@ -66,10 +66,10 @@ pipeline {
                                 --token_secret  ${token_secret} \
                                 --low_vmid      ${PROXMOX_LOW_VMID} \
                                 --high_vmid     ${PROXMOX_HIGH_VMID} \
-                                --template_name ${params.TEMPLATE} \
-                                --vm_name       ${params.VM_NAME} \
-                                --vm_role       ${params.ROLE} \
-                                --vm_branch     ${params.BRANCH} \
+                                --template_name "${params.TEMPLATE}" \
+                                --vm_name       "${params.VM_NAME}" \
+                                --vm_role       "${params.ROLE}" \
+                                --vm_branch     "${params.BRANCH}" \
                                 --vm_cores      ${params.CORES} \
                                 --vm_memory     ${params.MEMORY} \
                                 --vm_storage    ${params.STORAGE} \
