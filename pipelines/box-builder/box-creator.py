@@ -144,6 +144,18 @@ def resize_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use,
     data["size"]=f"{vm_storage}G"
     put_cluster_query(endpoint, data, proxmox_ip, token_name, token_secret)
 
+def tag_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid, tag_key, vm_role):
+    sanitized_role = re.sub(r'[^a-zA-Z0-9]', '-', vm_role)
+    role_tag = f"{tag_key}.{sanitized_role}"
+    cluster_query = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/config"
+    data = {
+        "tags": role_tag
+    }
+    response = put_cluster_query(cluster_query, data, proxmox_ip, token_name, token_secret)
+    
+    print(f"Tagged VM {vmid} with {role_tag}")
+    return response
+
 def is_vmid_locked(proxmox_ip, proxmox_node, token_name, token_secret, vm_id):
     cluster_query = f"api2/json/nodes/{proxmox_node}/qemu/{vm_id}/status/current"
     vm_status = get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret)
@@ -174,7 +186,7 @@ def get_vm_ip(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
                 ipv6 = ip['ip-address']
     return ipv4, ipv6
 
-def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network):
+def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_branch, vm_cores, vm_memory, vm_storage, vm_network):
     print(f"Picking a VMID between {low_vmid} and {high_vmid}")
     vmid_to_use=pick_vmid(proxmox_ip, token_name, token_secret, low_vmid, high_vmid)
     print(f"Picked VMID {vmid_to_use} on {proxmox_node}")
@@ -193,21 +205,21 @@ def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret,
     wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
     resize_disk(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, vm_storage)
     wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
+    tag_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, 'role', vm_role)
+    tag_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use, 'branch', vm_branch)
     start_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
+    wait_for_vmid_unlock(proxmox_ip, proxmox_node, token_name, token_secret, vmid_to_use)
     return vmid_to_use
 
-def write_file(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network, vmid, ipv4, ipv6, file_name):
+def write_file(proxmox_ip, proxmox_node, proxmox_pool, template_name, vm_name, vm_role, vm_branch, vm_cores, vm_memory, vm_storage, vm_network, vmid, ipv4, ipv6, file_name):
     output_data = {
         "proxmox_ip": proxmox_ip,
         "proxmox_node": proxmox_node,
         "proxmox_pool": proxmox_pool,
-        "token_name": token_name,
-        "token_secret": token_secret,
-        "low_vmid": low_vmid,
-        "high_vmid": high_vmid,
         "template_name": template_name,
         "vm_name": vm_name,
         "vm_role": vm_role,
+        "vm_branch": vm_branch,
         "vm_cores": vm_cores,
         "vm_memory": vm_memory,
         "vm_storage": vm_storage,
@@ -233,6 +245,7 @@ def main():
     parser.add_argument("--template_name", required=True, help="The name of the template to use")
     parser.add_argument("--vm_name", required=True, help="The name of the VM to create")
     parser.add_argument("--vm_role", required=True, help="The role of the VM to create")
+    parser.add_argument("--vm_branch", required=True, help="The branch of the VM to create")
     parser.add_argument("--vm_cores", required=True, help="Number of cores for the VM")
     parser.add_argument("--vm_memory", required=True, help="Memory for the VM")
     parser.add_argument("--vm_storage", required=True, help="Amount of storage, in GB")
@@ -249,17 +262,18 @@ def main():
     template_name   = args.template_name
     vm_name         = args.vm_name
     vm_role         = args.vm_role
+    vm_branch       = args.vm_branch
     vm_cores        = args.vm_cores
     vm_memory       = args.vm_memory
     vm_storage      = args.vm_storage
     vm_network      = args.vm_network
-    vmid=create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network)
+    vmid=create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_branch, vm_cores, vm_memory, vm_storage, vm_network)
     print("Sleep for a minute to allow the box to bootstrap")
     time.sleep(60)
     file_name="vm_metadata.json"
     ipv4, ipv6 = get_vm_ip(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
     print(f"VM IP: {ipv4}, {ipv6}")
-    write_file(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_cores, vm_memory, vm_storage, vm_network, vmid, ipv4, ipv6, file_name)
+    write_file(proxmox_ip, proxmox_node, proxmox_pool, template_name, vm_name, vm_role, vm_branch, vm_cores, vm_memory, vm_storage, vm_network, vmid, ipv4, ipv6, file_name)
     print(f"Wrote VM data to {file_name}")
     print(f"DUNZO!!!")
 

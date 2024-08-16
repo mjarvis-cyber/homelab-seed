@@ -69,6 +69,7 @@ pipeline {
                                 --template_name ${params.TEMPLATE} \
                                 --vm_name       ${params.VM_NAME} \
                                 --vm_role       ${params.ROLE} \
+                                --vm_branch     ${params.BRANCH} \
                                 --vm_cores      ${params.CORES} \
                                 --vm_memory     ${params.MEMORY} \
                                 --vm_storage    ${params.STORAGE} \
