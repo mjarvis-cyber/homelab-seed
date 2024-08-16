@@ -163,8 +163,7 @@ def start_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
 def get_vm_ip(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     cluster_query = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/agent/network-get-interfaces"
     response = get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret)
-    
-    # Iterate through interfaces to find the IP address
+    print(f"Network data: {response}")
     for interface in response['data']['result']:
         for ip in interface.get('ip-addresses', []):
             if ip['ip-address-type'] == 'ipv4':
