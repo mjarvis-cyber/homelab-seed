@@ -29,10 +29,10 @@ pipeline {
         stage('Parameter Validation') {
             steps {
                 script {
-                    if (!params.ROLE.matches('^[a-zA-Z0-9._-/]+$')) {
+                    if (!params.ROLE.matches('^[a-zA-Z0-9._/-]+$')) {
                         error("Invalid ROLE parameter. Only letters, numbers, '.', '_', '-', and '/' are allowed.")
                     }
-                    if (!params.BRANCH.matches('^[a-zA-Z0-9._-/]+$')) {
+                    if (!params.BRANCH.matches('^[a-zA-Z0-9._/-]+$')) {
                         error("Invalid BRANCH parameter. Only letters, numbers, '.', '_', '-', and '/' are allowed.")
                     }
                     if (!params.STORAGE.isInteger() || params.STORAGE.toInteger() > 200) {
