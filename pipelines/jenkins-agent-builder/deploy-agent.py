@@ -39,7 +39,7 @@ def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'
     ssh.close()
 
 def run_remote_command(master_ip, agent_name, secret):
-    command = f"sudo /home/ubuntu/scp-dir/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret}"
+    command = f"sudo /tmp/scp-dir/agent-configs/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret}"
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(master_ip, username='ubuntu')

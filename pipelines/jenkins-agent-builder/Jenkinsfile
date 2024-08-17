@@ -27,8 +27,6 @@ pipeline {
         JENKINS_API_USER    = "jenkins"
         JENKINS_API_TOKEN   = credentials('JENKINS_API_TOKEN')
         SECRET_FILE         = "TEMP_SECRET.txt"
-        // This needs to be added by hand to the credential store
-        VM_SSH_KEY          = "internal-ssh-key"
         SSH_KEY_FILE        = "internal_ssh_key.pem"
     }
     stages {
@@ -110,7 +108,7 @@ pipeline {
         stage('Provision Jenkins Agent') {
             steps {
                 script {
-                    withCredentials([sshUserPrivateKey(credentialsId: $VM_SSH_KEY, keyFileVariable: 'SSH_KEY_FILE')]) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'internal-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
                         sh """
                             echo "Writing SSH private key to ${SSH_KEY_FILE}"
                             cp \$SSH_KEY_FILE ${SSH_KEY_FILE}
