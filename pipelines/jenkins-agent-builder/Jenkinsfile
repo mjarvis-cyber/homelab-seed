@@ -116,8 +116,10 @@ pipeline {
                             sh """
                                 echo "Key file location: ${SSH_KEY_FILE}"
                                 ls -l ${SSH_KEY_FILE}
+                                ls -la
                                 cat ${SSH_KEY_FILE}
                                 chmod 600 ${SSH_KEY_FILE}
+                                sleep 60
                                 python deploy-agent.py \
                                     --secret-file ${SECRET_FILE} \
                                     --metadata-file vm_metadata.json \
