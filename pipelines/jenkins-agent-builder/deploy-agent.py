@@ -3,6 +3,7 @@ import json
 import paramiko
 import re
 from ipaddress import ip_network, ip_address
+import os
 
 def get_network_info(master_ip, ssh_key):
     key = paramiko.RSAKey(file_obj=ssh_key)
@@ -40,7 +41,26 @@ def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'
     ssh.connect(remote_host, username=username, pkey=key)
 
     scp = paramiko.SFTPClient.from_transport(ssh.get_transport())
-    scp.put(path_to_scp, '/tmp/scp-dir', recursive=True)
+
+    def upload_dir(local_dir, remote_dir):
+        try:
+            scp.mkdir(remote_dir)
+        except IOError:
+            pass
+        for item in os.listdir(local_dir):
+            local_path = os.path.join(local_dir, item)
+            remote_path = os.path.join(remote_dir, item)
+            if os.path.isfile(local_path):
+                scp.put(local_path, remote_path)
+            elif os.path.isdir(local_path):
+                upload_dir(local_path, remote_path)
+
+    try:
+        scp.mkdir('/tmp/scp-dir')
+    except IOError:
+        pass
+    upload_dir(path_to_scp, '/tmp/scp-dir')
+
     scp.close()
     ssh.close()
 
