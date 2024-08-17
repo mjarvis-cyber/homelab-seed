@@ -40,7 +40,7 @@ def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(remote_host, username=username, pkey=key)
     
-    put_path = f"/home/ubuntu/{os.path.basename(path_to_scp)}"
+    put_path = f"/home/ubuntu"
     
     # List files in the directory before copying
     print(f"Files in {path_to_scp}:")
