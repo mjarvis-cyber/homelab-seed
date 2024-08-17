@@ -3,6 +3,7 @@ import json
 import paramiko
 import re
 from ipaddress import ip_network, ip_address
+import os
 
 def get_network_info(master_ip, ssh_key):
     key = paramiko.RSAKey(file_obj=ssh_key)
@@ -38,10 +39,22 @@ def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(remote_host, username=username, pkey=key)
-    put_path=f"/home/ubuntu/{path_to_scp}"
+    
+    put_path = f"/home/ubuntu/{os.path.basename(path_to_scp)}"
+    
+    # List files in the directory before copying
+    print(f"Files in {path_to_scp}:")
+    for root, dirs, files in os.walk(path_to_scp):
+        for file in files:
+            file_path = os.path.join(root, file)
+            print(file_path)
+    
     scp = paramiko.SFTPClient.from_transport(ssh.get_transport())
+    
+    # Copy the specific files (install.sh and Dockerfile in this case)
     scp.put(f"{path_to_scp}/install.sh", f"{put_path}/install.sh")
     scp.put(f"{path_to_scp}/Dockerfile", f"{put_path}/Dockerfile")
+    
     scp.close()
     ssh.close()
 
