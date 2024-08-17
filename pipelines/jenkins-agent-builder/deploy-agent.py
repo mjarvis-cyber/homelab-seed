@@ -59,11 +59,13 @@ def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'
     ssh.close()
 
 def run_remote_command(ssh_key_path, remote_host, master_ip, agent_name, secret, username='ubuntu'):
+    makeexec = "chmod +x /home/ubuntu/install.sh"
     command = f"sudo /home/ubuntu/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret}"
     key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(remote_host, username=username, pkey=key)
+    stdin, stdout, stderr = ssh.exec_command(makeexec)
     stdin, stdout, stderr = ssh.exec_command(command)
     print(stdout.read().decode())
     print(stderr.read().decode())
