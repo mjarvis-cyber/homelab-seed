@@ -114,6 +114,7 @@ pipeline {
                         unstash 'vm-metadata'
                         withCredentials([sshUserPrivateKey(credentialsId: 'internal-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
                             sh """
+                                sleep 60
                                 chmod 600 ${SSH_KEY_FILE}
                                 python deploy-agent.py \
                                     --secret-file ${SECRET_FILE} \
