@@ -2,6 +2,7 @@ import argparse
 import requests
 from requests.auth import HTTPBasicAuth
 import json
+import xml.etree.ElementTree as ET
 
 def create_agent(jenkins_url, agent_name, username, api_token, label, executors):
     url = f"{jenkins_url}/computer/doCreateItem?name={agent_name}&type=hudson.slaves.DumbSlave"
@@ -78,6 +79,15 @@ def get_agent_secret(jenkins_url, agent_name, username, api_token):
         print(response.text)
         return None
 
+def extract_secret_from_jnlp(jnlp_content):
+    try:
+        root = ET.fromstring(jnlp_content)
+        secret = root.find('.//argument').text
+        return secret
+    except Exception as e:
+        print(f"Failed to extract secret: {e}")
+        return None
+
 def save_secret_to_file(secret, secret_file):
     with open(secret_file, 'w') as f:
         f.write(secret)
@@ -105,10 +115,12 @@ def main():
 
     create_agent(jenkins_url, agent_name, username, api_token, label, executors)
 
-    secret = get_agent_secret(jenkins_url, agent_name, username, api_token)
+    jnlp_content = get_agent_secret(jenkins_url, agent_name, username, api_token)
 
-    if secret:
-        save_secret_to_file(secret, secret_file)
+    if jnlp_content:
+        secret = extract_secret_from_jnlp(jnlp_content)
+        if secret:
+            save_secret_to_file(secret, secret_file)
 
 if __name__ == "__main__":
     main()
