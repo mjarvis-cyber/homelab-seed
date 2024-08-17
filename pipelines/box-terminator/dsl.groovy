@@ -1,4 +1,4 @@
-pipelineJob('box-builder') {
+pipelineJob('box-terminator') {
     displayName('Box Terminator')
     description('Terminate a VM')
 
