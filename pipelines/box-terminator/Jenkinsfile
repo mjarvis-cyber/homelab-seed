@@ -8,14 +8,12 @@ pipeline {
     }
     environment {
         PROXMOX_API_CREDS   = credentials('proxmox-api-token')
-        PROXMOX_LOW_VMID    = "400"
-        PROXMOX_HIGH_VMID   = "600"
     }
     stages {
         stage('Parameter Validation') {
             steps {
                 script {
-                    if (!params.ROLE.matches('^[0-9]+$')) {
+                    if (!params.VMID.matches('^[0-9]+$')) {
                         error("Invalid VMID parameter. Only  numbers are allowed.")
                     }
                 }
