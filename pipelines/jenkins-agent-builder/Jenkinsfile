@@ -24,7 +24,8 @@ pipeline {
         string(name: 'AGENT_EXECUTORS', defaultValue: '10', description: 'Number of executors for the new agent')
     }
     environment {
-        JENKINS_API_USER    = credentials('JENKINS_API_TOKEN')
+        JENKINS_API_USER    = "jenkins"
+        JENKINS_API_TOKEN   = credentials('JENKINS_API_TOKEN')
         SECRET_FILE         = "TEMP_SECRET.txt"
     }
     stages {
@@ -58,15 +59,13 @@ pipeline {
             steps {
                 script {
                     dir('pipelines/jenkins-agent-builder') {
-                        def api_user = JENKINS_API_USER.split(':')[0]
-                        def api_token = JENKINS_API_USER.split(':')[1]
                         sh """
                             echo "Set up agent on controller"
                             python generate-agent.py \
                                 --jenkins-url   ${params.JENKINS_URL} \
                                 --agent-name    ${params.AGENT_NAME} \
                                 --username      ${api_user} \
-                                --api-token     ${api_token} \
+                                --api-token     ${JENKINS_API_TOKEN} \
                                 --label         ${params.NETWORK} \
                                 --executors     ${params.AGENT_EXECUTORS} \
                                 --secret-file   ${SECRET_FILE}
