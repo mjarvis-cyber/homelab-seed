@@ -1,34 +1,63 @@
 import argparse
 import requests
 from requests.auth import HTTPBasicAuth
+import json
 
 def create_agent(jenkins_url, agent_name, username, api_token, label, executors):
-    url = f"{jenkins_url}/computer/doCreateItem?name={agent_name}"
-    config_xml = f"""<?xml version='1.1' encoding='UTF-8'?>
-    <slave>
-      <name>{agent_name}</name>
-      <description>Automatically Provisioned Jenkins Agent</description>
-      <remoteFS>/home/jenkins</remoteFS>
-      <label>{label}</label>
-      <mode>NORMAL</mode>
-      <numExecutors>{executors}</numExecutors>
-      <retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/>
-      <launcher class="hudson.slaves.JNLPLauncher">
-        <workingDirectory>/path/to/agent/working/dir</workingDirectory>
-      </launcher>
-      <vncPort>0</vncPort>
-      <udpPort>0</udpPort>
-      <installations/>
-      <doNotUseCustomWorkspace>false</doNotUseCustomWorkspace>
-      <disabled>false</disabled>
-    </slave>"""
-    
+    url = f"{jenkins_url}/computer/doCreateItem?name={agent_name}&type=hudson.slaves.DumbSlave"
+
+    json_payload = {
+        "name": agent_name,
+        "nodeDescription": "Automatically Generated Agent",
+        "numExecutors": executors,
+        "remoteFS": "/home/jenkins/agent",
+        "labelString": label,
+        "mode": "EXCLUSIVE",
+        "launchers": [
+            {
+                "stapler-class": "hudson.slaves.JNLPLauncher",
+                "$class": "hudson.slaves.JNLPLauncher",
+                "workDirSettings": {
+                    "disabled": True,
+                    "workDirPath": "",
+                    "internalDir": "remoting",
+                    "failIfWorkDirIsMissing": False
+                },
+                "tunnel": "",
+                "vmargs": "-Xmx1024m"
+            }
+        ],
+        "retentionStrategy": {
+            "stapler-class": "hudson.slaves.RetentionStrategy$Always",
+            "$class": "hudson.slaves.RetentionStrategy$Always"
+        },
+        "nodeProperties": {
+            "stapler-class-bag": True,
+            "hudson-slaves-EnvironmentVariablesNodeProperty": {
+                "env": [
+                    {"key": "JAVA_HOME", "value": "/docker-java-home"},
+                    {"key": "JENKINS_HOME", "value": "/home/jenkins"}
+                ]
+            },
+            "hudson-tools-ToolLocationNodeProperty": {
+                "locations": [
+                    {"key": "hudson.plugins.git.GitTool$DescriptorImpl@Default", "home": "/usr/bin/git"},
+                    {"key": "hudson.model.JDK$DescriptorImpl@JAVA-8", "home": "/usr/bin/java"},
+                    {"key": "hudson.tasks.Maven$MavenInstallation$DescriptorImpl@MAVEN-3.5.2", "home": "/usr/bin/mvn"}
+                ]
+            }
+        }
+    }
+
+    json_payload = json.dumps(json_payload)
+
     response = requests.post(
         url,
-        data=config_xml,
-        headers={'Content-Type': 'application/xml'},
+        data={"json": json_payload},
+        headers={'Content-Type': 'application/x-www-form-urlencoded'},
         auth=HTTPBasicAuth(username, api_token)
     )
+
     if response.status_code == 200:
         print(f"Successfully created agent {agent_name}")
     else:
