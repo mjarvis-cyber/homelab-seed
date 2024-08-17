@@ -3,7 +3,6 @@ import json
 import paramiko
 import re
 from ipaddress import ip_network, ip_address
-import os
 
 def get_network_info(master_ip, ssh_key):
     key = paramiko.RSAKey(file_obj=ssh_key)
@@ -39,33 +38,15 @@ def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(remote_host, username=username, pkey=key)
-
+    put_path=f"/tmp/{path_to_scp}"
     scp = paramiko.SFTPClient.from_transport(ssh.get_transport())
-
-    def upload_dir(local_dir, remote_dir):
-        try:
-            scp.mkdir(remote_dir)
-        except IOError:
-            pass
-        for item in os.listdir(local_dir):
-            local_path = os.path.join(local_dir, item)
-            remote_path = os.path.join(remote_dir, item)
-            if os.path.isfile(local_path):
-                scp.put(local_path, remote_path)
-            elif os.path.isdir(local_path):
-                upload_dir(local_path, remote_path)
-
-    try:
-        scp.mkdir('/tmp/scp-dir')
-    except IOError:
-        pass
-    upload_dir(path_to_scp, '/tmp/scp-dir')
-
+    scp.put(f"{path_to_scp}/install.sh", put_path)
+    scp.put(f"{path_to_scp}/Dockerfile", put_path)
     scp.close()
     ssh.close()
 
 def run_remote_command(master_ip, agent_name, secret, scp_dir):
-    command = f"sudo /tmp/scp-dir/{scp_dir}/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret}"
+    command = f"sudo /tmp/{scp_dir}/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret}"
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(master_ip, username='ubuntu')
