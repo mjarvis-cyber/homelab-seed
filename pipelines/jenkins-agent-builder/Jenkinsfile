@@ -109,18 +109,20 @@ pipeline {
         stage('Provision Jenkins Agent') {
             steps {
                 script {
-                    unstash 'agent-secrets'
-                    unstash 'vm-metadata'
-                    withCredentials([sshUserPrivateKey(credentialsId: 'internal-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
-                        sh """
-                            chmod 600 ${SSH_KEY_FILE}
-                            python deploy-agent.py \
-                                --secret-file ${SECRET_FILE} \
-                                --metadata-file vm_metadata.json \
-                                --ssh-key-file ${SSH_KEY_FILE} \
-                                --scp-dir "pipelines/jenkins-agent-builder/agent-configs" \
-                                --agent-name ${params.AGENT_NAME}
-                        """
+                    dir('pipelines/jenkins-agent-builder') {
+                        unstash 'agent-secrets'
+                        unstash 'vm-metadata'
+                        withCredentials([sshUserPrivateKey(credentialsId: 'internal-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
+                            sh """
+                                chmod 600 ${SSH_KEY_FILE}
+                                python deploy-agent.py \
+                                    --secret-file ${SECRET_FILE} \
+                                    --metadata-file vm_metadata.json \
+                                    --ssh-key-file ${SSH_KEY_FILE} \
+                                    --scp-dir "agent-configs" \
+                                    --agent-name ${params.AGENT_NAME}
+                            """
+                        }
                     }
                 }
             }

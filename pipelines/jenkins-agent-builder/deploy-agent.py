@@ -38,8 +38,8 @@ def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'
     scp.close()
     ssh.close()
 
-def run_remote_command(master_ip, agent_name, secret):
-    command = f"sudo /tmp/scp-dir/agent-configs/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret}"
+def run_remote_command(master_ip, agent_name, secret, scp_dir):
+    command = f"sudo /tmp/scp-dir/{scp_dir}/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret}"
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(master_ip, username='ubuntu')
@@ -71,7 +71,7 @@ def main():
         return
     with open(args.ssh_key_file) as ssh_key_file:
         scp_directory_to_remote(ssh_key_file, args.scp_dir, master_ip)
-    run_remote_command(master_ip, args.agent_name, secret)
+    run_remote_command(master_ip, args.agent_name, secret, args.scp_dir)
 
 if __name__ == "__main__":
     main()
