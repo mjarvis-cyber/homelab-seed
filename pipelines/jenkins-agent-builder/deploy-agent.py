@@ -45,14 +45,15 @@ def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'
     scp.close()
     ssh.close()
 
-def run_remote_command(ssh_key, remote_host, master_ip, agent_name, secret, username='ubuntu'):
+def run_remote_command(ssh_key_path, remote_host, master_ip, agent_name, secret, username='ubuntu'):
     command = f"sudo /home/ubuntu/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret}"
-    key = paramiko.RSAKey(file_obj=ssh_key)
+    key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(remote_host, username=username, pkey=key)
     stdin, stdout, stderr = ssh.exec_command(command)
     print(stdout.read().decode())
+    print(stderr.read().decode())
     ssh.close()
 
 def main():
@@ -79,7 +80,7 @@ def main():
         return
     with open(args.ssh_key_file) as ssh_key_file:
         scp_directory_to_remote(ssh_key_file, args.scp_dir, vm_ipv4)
-    run_remote_command(ssh_key_file, vm_ipv4, master_ip, args.agent_name, secret)
+    run_remote_command(args.ssh_key_file, vm_ipv4, master_ip, args.agent_name, secret)
 
 if __name__ == "__main__":
     main()
