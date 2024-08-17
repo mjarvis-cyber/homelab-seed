@@ -100,6 +100,7 @@ pipeline {
                         selector: specific("${buildbox.number}"),
                         filter: 'vm_metadata.json'
                     )
+                    stash name: 'vm-metadata', includes: vm_metadata.json
                 }
             }
         }
@@ -108,6 +109,8 @@ pipeline {
                 script {
                     unstash 'agent-secrets'
                     sh "cat ${SECRET_FILE}"
+                    unstash 'vm-metadata'
+                    sh "cat vm_metadata.json"
                 }
             }
         }
