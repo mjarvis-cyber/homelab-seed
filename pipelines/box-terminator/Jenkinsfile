@@ -1,5 +1,7 @@
 pipeline {
-    agent admin
+    agent {
+        label 'admin'
+    }
     parameters {
         string(name: 'PROXMOX_IP', defaultValue: 'cyberops2.pizzasec.com', description: 'ProxMox IP address')
         string(name: 'VMID', defaultValue: '0', description: 'VMID of VM to delete')
