@@ -117,13 +117,12 @@ pipeline {
                                 echo "Key file location: ${SSH_KEY_FILE}"
                                 ls -l ${SSH_KEY_FILE}
                                 ls -la
-                                cat ${SSH_KEY_FILE}
-                                chmod 600 ${SSH_KEY_FILE}
-                                sleep 60
+                                cat ${SSH_KEY_FILE} > crap.pem
+                                chmod 600 crap.pem
                                 python deploy-agent.py \
                                     --secret-file ${SECRET_FILE} \
                                     --metadata-file vm_metadata.json \
-                                    --ssh-key-file ${SSH_KEY_FILE} \
+                                    --ssh-key-file crap.pem \
                                     --scp-dir "agent-configs" \
                                     --agent-name ${params.AGENT_NAME} \
                                     --master-ip ${params.PROXMOX_IP}
