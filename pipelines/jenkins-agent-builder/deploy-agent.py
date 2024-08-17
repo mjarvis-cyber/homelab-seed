@@ -40,8 +40,8 @@ def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'
     ssh.connect(remote_host, username=username, pkey=key)
     put_path=f"/home/ubuntu/{path_to_scp}"
     scp = paramiko.SFTPClient.from_transport(ssh.get_transport())
-    scp.put(f"{path_to_scp}/install.sh", put_path)
-    scp.put(f"{path_to_scp}/Dockerfile", put_path)
+    scp.put(f"{path_to_scp}/install.sh", f"{put_path}/install.sh")
+    scp.put(f"{path_to_scp}/Dockerfile", f"{put_path}/Dockerfile")
     scp.close()
     ssh.close()
 

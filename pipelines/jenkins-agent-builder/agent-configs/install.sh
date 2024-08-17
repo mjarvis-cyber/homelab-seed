@@ -77,7 +77,7 @@ docker build \
   --build-arg JENKINS_URL=http://$JENKINS_IP:$JENKINS_PORT/ \
   --build-arg JENKINS_AGENT_NAME=$JENKINS_AGENT_NAME \
   --build-arg JENKINS_SECRET=$JENKINS_SECRET \
-  -t jenkins-agent:latest /home/ubuntu/agent-configs
+  -t jenkins-agent:latest /home/ubuntu/
 
 # Run Jenkins agent container
 docker run -d jenkins-agent:latest
