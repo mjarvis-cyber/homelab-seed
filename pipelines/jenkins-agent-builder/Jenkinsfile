@@ -120,7 +120,8 @@ pipeline {
                                     --metadata-file vm_metadata.json \
                                     --ssh-key-file ${SSH_KEY_FILE} \
                                     --scp-dir "agent-configs" \
-                                    --agent-name ${params.AGENT_NAME}
+                                    --agent-name ${params.AGENT_NAME} \
+                                    --master-ip ${params.PROXMOX_IP}
                             """
                         }
                     }
