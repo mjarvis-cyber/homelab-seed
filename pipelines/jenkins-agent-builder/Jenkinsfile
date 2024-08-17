@@ -33,6 +33,7 @@ pipeline {
         stage('Parameter Validation') {
             steps {
                 script {
+                    cleanWs()
                     if (!params.ROLE.matches('^[a-zA-Z0-9._/-]+$')) {
                         error("Invalid ROLE parameter. Only letters, numbers, '.', '_', '-', and '/' are allowed.")
                     }
@@ -108,25 +109,19 @@ pipeline {
         stage('Provision Jenkins Agent') {
             steps {
                 script {
+                    unstash 'agent-secrets'
+                    unstash 'vm-metadata'
                     withCredentials([sshUserPrivateKey(credentialsId: 'internal-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
                         sh """
-                            echo "Writing SSH private key to ${SSH_KEY_FILE}"
-                            cp \$SSH_KEY_FILE ${SSH_KEY_FILE}
                             chmod 600 ${SSH_KEY_FILE}
+                            python deploy-agent.py \
+                                --secret-file ${SECRET_FILE} \
+                                --metadata-file vm_metadata.json \
+                                --ssh-key-file ${SSH_KEY_FILE} \
+                                --scp-dir "pipelines/jenkins-agent-builder/agent-configs" \
+                                --agent-name ${params.AGENT_NAME}
                         """
                     }
-                    unstash 'agent-secrets'
-                    sh "cat ${SECRET_FILE}"
-                    unstash 'vm-metadata'
-                    sh "cat vm_metadata.json"
-                    sh """
-                        python your-python-script.py \
-                            --secret-file ${SECRET_FILE} \
-                            --metadata-file vm_metadata.json \
-                            --ssh-key-file ${SSH_KEY_FILE} \
-                            --scp-dir "pipelines/jenkins-agent-builder/agent-configs" \
-                            --agent-name ${params.AGENT_NAME}
-                    """
                 }
             }
         }
