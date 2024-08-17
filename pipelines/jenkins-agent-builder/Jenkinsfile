@@ -64,7 +64,7 @@ pipeline {
                             python generate-agent.py \
                                 --jenkins-url   ${params.JENKINS_URL} \
                                 --agent-name    ${params.AGENT_NAME} \
-                                --username      ${api_user} \
+                                --username      ${JENKINS_API_USER} \
                                 --api-token     ${JENKINS_API_TOKEN} \
                                 --label         ${params.NETWORK} \
                                 --executors     ${params.AGENT_EXECUTORS} \
