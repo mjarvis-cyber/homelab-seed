@@ -24,7 +24,7 @@ pipeline {
                         branches: [[name: "*/${params.BRANCH}"]],
                         doGenerateSubmoduleConfigurations: false,
                         extensions: [],
-                        userRemoteConfigs: [[url: 'https://github.com/PatronC2/Patron.git']]
+                        userRemoteConfigs: [[url: 'git@github.com:PatronC2/Patron.git']]
                     ])
                 }
             }
