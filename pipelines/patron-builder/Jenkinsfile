@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_IMAGE = ''
+    }
+    stages {
+        stage('Clone Git Repo') {
+            steps {
+                git branch: 'main', url: 'https://github.com/OrangeSquirter/patron-devtools.git'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    DOCKER_IMAGE = docker.build('ansible', '.')
+                }
+            }
+        }
+        stage('Run Ansible Playbooks') {
+            steps {
+                script {
+                    DOCKER_IMAGE.inside {
+                        sh '''
+                        ansible-playbook -i hosts playbook.yml
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                sh 'docker system prune -f'
+            }
+        }
+    }
+}
