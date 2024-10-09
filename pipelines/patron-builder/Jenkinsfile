@@ -1,37 +1,48 @@
 pipeline {
-    agent any
-    environment {
-        DOCKER_IMAGE = ''
+    agent {
+        node {
+            label 'patron'
+        }
+    }
+    parameters {
+        string(name: 'TEMPLATE', defaultValue: 'ubuntu-24', description: 'Base OS for Patron')
+        string(name: 'BRANCH', defaultValue: 'dev', description: 'Branch of the patron environment')
+        choice(name: 'NETWORK', choices: ['patron', 'vmbr0', 'vmbr1'], description: 'Network to place the VM on')
     }
     stages {
-        stage('Clone Git Repo') {
-            steps {
-                git branch: 'main', url: 'https://github.com/OrangeSquirter/patron-devtools.git'
-            }
-        }
-        stage('Build Docker Image') {
+        stage('Checkout') {
             steps {
                 script {
-                    DOCKER_IMAGE = docker.build('ansible', '.')
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: "*/master"]],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [],
+                        userRemoteConfigs: [[url: 'https://github.com/OrangeSquirter/patron-devtools.git']]
+                    ])
+                    
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: "*/${params.BRANCH}"]],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [],
+                        userRemoteConfigs: [[url: 'https://github.com/PatronC2/Patron.git']]
+                    ])
                 }
             }
         }
         stage('Run Ansible Playbooks') {
+            agent {
+                dockerfile {
+                    filename 'patron-devtools/ansible/Dockerfile'
+                }
+            }
             steps {
                 script {
                     DOCKER_IMAGE.inside {
                         sh '''
-                        ansible-playbook -i hosts playbook.yml
+                        ls -la /app
                         '''
                     }
                 }
-            }
-        }
-    }
-    post {
-        always {
-            script {
-                sh 'docker system prune -f'
             }
         }
     }
