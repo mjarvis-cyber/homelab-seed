@@ -24,7 +24,7 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    sh 'ls -la'
+                    sh 'ls -laR'
                     docker.withRegistry("${REGISTRY}", "docker-registry-creds") {
                         def customImage = docker.build("${params.IMAGE_NAME}:${params.IMAGE_TAG}", "-f ${params.DOCKER_FILE_PATH} .")
                         customImage.push()
