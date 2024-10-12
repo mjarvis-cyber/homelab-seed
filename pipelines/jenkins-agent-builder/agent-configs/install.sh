@@ -7,7 +7,7 @@ usage() {
 }
 
 # Parse command-line arguments
-while getopts ":i:p:n:s:" opt; do
+while getopts ":i:p:n:s:d:" opt; do
     case ${opt} in
         i)
             JENKINS_IP=${OPTARG}
