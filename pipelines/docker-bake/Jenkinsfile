@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'REPO_URL', defaultValue: 'https://github.com/your-repo/your-repo.git', description: 'Path to the repo')
+        string(name: 'BAKE_FILE_PATH', defaultValue: "path/to/docker-bake.hcl", description: 'Path to docker bake file')
+    }
+    environment {
+        REGISTRY = "192.168.1.100:5000"
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git url: "${params.REPO_URL}"
+            }
+        }
+
+        stage('Build Docker Images using docker-bake.hcl') {
+            steps {
+                script {
+                    /sh "docker login ${REGISTRY}"
+                    sh 'docker buildx create --use || true'
+                    sh "docker buildx bake -f ${params.DOCKER_BAKE_FILE}"
+                }
+            }
+        }
+
+        stage('Push Images to Registry') {
+            steps {
+                script {
+                    sh "docker buildx bake -f ${params.DOCKER_BAKE_FILE} --push"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Docker images built and pushed successfully!'
+        }
+        failure {
+            echo 'Build failed. Check logs for errors.'
+        }
+    }
+}
