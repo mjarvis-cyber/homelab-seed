@@ -4,7 +4,9 @@ pipeline {
     }
     parameters {
         string(name: 'REPO_URL', defaultValue: 'https://github.com/your-repo/your-repo.git', description: 'Path to the repo')
-        string(name: 'BAKE_FILE_PATH', defaultValue: "path/to/docker-bake.hcl", description: 'Path to docker bake file')
+        string(name: 'DOCKER_FILE_PATH', defaultValue: "path/to/Dockerfile", description: 'Path to Dockerfile')
+        string(name: 'IMAGE_NAME', defaultValue: "crap", description: 'Name of image')
+        string(name: 'IMAGE_TAG', defaultValue: "latest", description: 'Version of image')
     }
     environment {
         REGISTRY = "192.168.1.100:5000"
@@ -13,28 +15,20 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git url: "${params.REPO_URL}"
-            }
-        }
-
-        stage('Build Docker Images using docker-bake.hcl') {
-            steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh "echo ${DOCKER_PASSWORD} | docker login ${REGISTRY} --username ${DOCKER_USERNAME} --password-stdin"
-                    }
-                    sh 'ls -la'
-                    
-                    sh 'docker buildx create --use || true'
-                    sh "docker buildx bake -f ${params.BAKE_FILE_PATH}"
+                    git url: "${params.REPO_URL}"
                 }
             }
         }
 
-        stage('Push Images to Registry') {
+        stage('Build Docker Images') {
             steps {
                 script {
-                    sh "docker buildx bake -f ${params.BAKE_FILE_PATH} --push"
+                    sh 'ls -la'
+                    docker.withRegistry("${REGISTRY}", "docker-registry-creds") {
+                        def customImage = docker.build("${params.IMAGE_NAME}:${params.IMAGE_TAG}", "-f ${params.DOCKER_FILE_PATH} .")
+                        customImage.push()
+                    }
                 }
             }
         }
