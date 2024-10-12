@@ -58,9 +58,9 @@ def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'
     scp.close()
     ssh.close()
 
-def run_remote_command(ssh_key_path, remote_host, master_ip, agent_name, secret, username='ubuntu'):
+def run_remote_command(ssh_key_path, remote_host, master_ip, agent_name, secret, docker_registry, username='ubuntu'):
     makeexec = "chmod +x /home/ubuntu/install.sh"
-    command = f"sudo /home/ubuntu/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret}"
+    command = f"sudo /home/ubuntu/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret} -d {docker_registry}"
     key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -79,6 +79,7 @@ def main():
     parser.add_argument('--scp-dir', required=True, help='Path to the directory to SCP.')
     parser.add_argument('--agent-name', required=True, help='Name of the Jenkins agent.')
     parser.add_argument('--master-ip', required=True, help='IP address of the Jenkins master.')
+    parser.add_argument('--docker-registry', required=True, help='URL of docker registry to trust.')
 
     args = parser.parse_args()
     with open(args.metadata_file) as f:
@@ -95,7 +96,7 @@ def main():
         return
     with open(args.ssh_key_file) as ssh_key_file:
         scp_directory_to_remote(ssh_key_file, args.scp_dir, vm_ipv4)
-    run_remote_command(args.ssh_key_file, vm_ipv4, master_ip, args.agent_name, secret)
+    run_remote_command(args.ssh_key_file, vm_ipv4, master_ip, args.agent_name, secret, args.docker_registry)
 
 if __name__ == "__main__":
     main()

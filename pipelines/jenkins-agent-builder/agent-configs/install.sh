@@ -2,7 +2,7 @@
 
 # Function to display usage information
 usage() {
-    echo "Usage: $0 -i <JENKINS_IP> -p <JENKINS_PORT> -n <JENKINS_AGENT_NAME> -s <JENKINS_SECRET>"
+    echo "Usage: $0 -i <JENKINS_IP> -p <JENKINS_PORT> -n <JENKINS_AGENT_NAME> -s <JENKINS_SECRET> -d <DOCKER_REGISTRY>"
     exit 1
 }
 
@@ -21,6 +21,9 @@ while getopts ":i:p:n:s:" opt; do
         s)
             JENKINS_SECRET=${OPTARG}
             ;;
+        d)
+            DOCKER_REGISTRY=${OPTARG}
+            ;;            
         \?)
             echo "Invalid option: -${OPTARG}" >&2
             usage
@@ -66,11 +69,14 @@ echo \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 sudo apt-get update
-
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # Enable and start Docker service
 sudo systemctl enable --now docker
+
+# Configure Docker to allow insecure registries
+echo "{ \"insecure-registries\":[\"$DOCKER_REGISTRY\"] }" | sudo tee /etc/docker/daemon.json
+sudo systemctl restart docker
 
 # Build Jenkins agent Docker image
 docker build \
@@ -79,5 +85,8 @@ docker build \
   --build-arg JENKINS_SECRET=$JENKINS_SECRET \
   -t jenkins-agent:latest /home/ubuntu/
 
-# Run Jenkins agent container
-docker run -d jenkins-agent:latest
+# Run Jenkins agent container with Docker socket mounted
+docker run -d \
+  --name jenkins-agent \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  jenkins-agent:latest

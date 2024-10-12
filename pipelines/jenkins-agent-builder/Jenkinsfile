@@ -22,6 +22,7 @@ pipeline {
         string(name: 'JENKINS_HOSTNAME', defaultValue: 'jenkins.pizzasec.com', description: 'URL of Jenkins')
         string(name: 'AGENT_NAME', defaultValue: 'main', description: 'Name of the new agent')
         string(name: 'AGENT_EXECUTORS', defaultValue: '10', description: 'Number of executors for the new agent')
+        string(name: 'DOCKER_REGISTRY', defaultValue: 'registry.pizzasec.com', description: 'HTTPS endpoint for private docker registry')
     }
     environment {
         JENKINS_API_USER    = "jenkins"
@@ -125,7 +126,8 @@ pipeline {
                                     --ssh-key-file crap.pem \
                                     --scp-dir "agent-configs" \
                                     --agent-name ${params.AGENT_NAME} \
-                                    --master-ip ${params.JENKINS_HOSTNAME}
+                                    --master-ip ${params.JENKINS_HOSTNAME} \
+                                    --docker-registry ${params.DOCKER_REGISTRY}
                             """
                         }
                     }
