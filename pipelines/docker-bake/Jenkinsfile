@@ -9,7 +9,7 @@ pipeline {
         string(name: 'IMAGE_TAG', defaultValue: "latest", description: 'Version of image')
     }
     environment {
-        REGISTRY = "192.168.1.100:5000"
+        REGISTRY = "registry.pizzasec.com"
     }
 
     stages {
