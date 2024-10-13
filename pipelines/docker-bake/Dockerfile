@@ -8,4 +8,4 @@ RUN chmod +x /app/build.sh
 
 WORKDIR /app
 
-ENTRYPOINT ["/app/build.sh"]
+CMD ["/app/build.sh"]
