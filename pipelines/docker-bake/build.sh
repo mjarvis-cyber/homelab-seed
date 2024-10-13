@@ -38,8 +38,12 @@ echo "${PASSWORD}" | docker login "https://${REGISTRY}" --username "${USERNAME}"
 # Create the buildx builder (if not already created)
 docker buildx create --use || true
 
-# Build and push the image using docker buildx bake, overriding the 'tag' variable in the bake file
-docker buildx bake -f "${DOCKER_BAKE_FILE}" --set TAG="${TAG}" --push
+# Set environment variables for bake
+export TAG="${TAG}"
+export REGISTRY="${REGISTRY}"
+
+# Build and push the image using docker buildx bake
+docker buildx bake -f "${DOCKER_BAKE_FILE}" --push
 
 # Cleanup
 cd ../ && rm -rf repo
