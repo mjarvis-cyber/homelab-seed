@@ -20,6 +20,7 @@ echo "REPO_URL: ${REPO_URL}"
 echo "DOCKER_BAKE_FILE: ${DOCKER_BAKE_FILE}"
 echo "BRANCH: ${BRANCH}"
 echo "USERNAME: ${USERNAME}"
+echo "TAG: ${TAG}"
 
 # Ensure all required parameters are provided
 if [ -z "$REGISTRY" ] || [ -z "$REPO_URL" ] || [ -z "$DOCKER_BAKE_FILE" ] || [ -z "$BRANCH" ] || [ -z "$USERNAME" ] || [ -z "$PASSWORD" ] || [ -z "$TAG" ]; then
@@ -37,8 +38,8 @@ echo "${PASSWORD}" | docker login "https://${REGISTRY}" --username "${USERNAME}"
 # Create the buildx builder (if not already created)
 docker buildx create --use || true
 
-# Build and push the image using docker buildx bake, overriding the 'tag' variable
-docker buildx bake -f "${DOCKER_BAKE_FILE}" --set *.tags=${TAG} --push
+# Build and push the image using docker buildx bake, overriding the 'tag' variable in the bake file
+docker buildx bake -f "${DOCKER_BAKE_FILE}" --set tag=${TAG} --push
 
 # Cleanup
 cd ../ && rm -rf repo
