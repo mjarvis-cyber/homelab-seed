@@ -19,17 +19,15 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')]) {
-                        DOCKER_IMAGE.inside {
-                            sh """
-                            cd /app
-                            ./build.sh \
-                                ${REGISTRY} \
-                                ${params.REPO_URL} \
-                                ${params.DOCKER_BAKE_FILE} \
-                                ${REGISTRY_USERNAME} \
-                                ${REGISTRY_PASSWORD}
-                            """
-                        }
+                        sh """
+                        cd /app
+                        ./build.sh \
+                             ${REGISTRY} \
+                            ${params.REPO_URL} \
+                            ${params.DOCKER_BAKE_FILE} \
+                            ${REGISTRY_USERNAME} \
+                             ${REGISTRY_PASSWORD}
+                        """
                     }
                 }
             }
