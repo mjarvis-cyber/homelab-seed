@@ -26,7 +26,7 @@ pipeline {
                             ${params.REPO_URL} \
                             ${params.DOCKER_BAKE_FILE} \
                             ${REGISTRY_USERNAME} \
-                            ${REGISTRY_PASSWORD}
+                            '${REGISTRY_PASSWORD}'
                         """
                     }
                 }
