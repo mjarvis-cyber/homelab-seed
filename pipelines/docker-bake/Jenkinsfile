@@ -14,7 +14,7 @@ pipeline {
             agent {
                 dockerfile {
                     filename 'pipelines/docker-bake/Dockerfile'
-                    additionalArgs '-v /var/run/docker.sock:/var/run/docker.sock'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
                 }
             }
             steps {
