@@ -14,14 +14,14 @@ pipeline {
             agent {
                 dockerfile {
                     filename 'pipelines/docker-bake/Dockerfile'
+                    additionalArgs '-v /var/run/docker.sock:/var/run/docker.sock'
                 }
             }
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')]) {
                         sh """
-                        cd /app
-                        ./build.sh \
+                        /app/build.sh \
                             ${REGISTRY} \
                             ${params.REPO_URL} \
                             ${params.DOCKER_BAKE_FILE} \
