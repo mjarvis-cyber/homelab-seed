@@ -22,7 +22,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')]) {
-                        sh """
+                        sh '''
                         docker run --rm \
                           -v $(pwd):/app \
                           build.sh \
@@ -31,7 +31,7 @@ pipeline {
                           ${params.DOCKER_BAKE_FILE} \
                           ${REGISTRY_USERNAME} \
                           ${REGISTRY_PASSWORD}
-                        """
+                        '''
                     }
                 }
             }
