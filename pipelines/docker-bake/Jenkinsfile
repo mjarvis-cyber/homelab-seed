@@ -7,7 +7,7 @@ pipeline {
         string(name: 'DOCKER_BAKE_FILE', defaultValue: "path/to/docker-bake.hcl", description: 'Path to docker-bake.hcl')
     }
     environment {
-        REGISTRY = "https://registry.pizzasec.com"
+        REGISTRY = "registry.pizzasec.com"
     }
     stages {
         stage('Build and Push Docker Images') {
@@ -22,11 +22,11 @@ pipeline {
                         sh """
                         cd /app
                         ./build.sh \
-                             ${REGISTRY} \
+                            ${REGISTRY} \
                             ${params.REPO_URL} \
                             ${params.DOCKER_BAKE_FILE} \
                             ${REGISTRY_USERNAME} \
-                             ${REGISTRY_PASSWORD}
+                            ${REGISTRY_PASSWORD}
                         """
                     }
                 }
