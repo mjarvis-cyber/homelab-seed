@@ -10,14 +10,6 @@ pipeline {
         REGISTRY = "https://registry.pizzasec.com"
     }
     stages {
-        stage('Clone Repository') {
-            steps {
-                script {
-                    git url: "${params.REPO_URL}"
-                }
-            }
-        }
-
         stage('Build and Push Docker Images') {
             agent {
                 dockerfile {
