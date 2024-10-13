@@ -19,19 +19,25 @@ pipeline {
         }
 
         stage('Build and Push Docker Images') {
+            agent {
+                dockerfile {
+                    filename 'pipelines/docker-bake/Dockerfile'
+                }
+            }
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')]) {
-                        sh '''
-                        docker run --rm \
-                          -v $(pwd):/app \
-                          build.sh \
-                          ${REGISTRY} \
-                          ${params.REPO_URL} \
-                          ${params.DOCKER_BAKE_FILE} \
-                          ${REGISTRY_USERNAME} \
-                          ${REGISTRY_PASSWORD}
-                        '''
+                        DOCKER_IMAGE.inside {
+                            sh """
+                            cd /app
+                            ./build.sh \
+                                ${REGISTRY} \
+                                ${params.REPO_URL} \
+                                ${params.DOCKER_BAKE_FILE} \
+                                ${REGISTRY_USERNAME} \
+                                ${REGISTRY_PASSWORD}
+                            """
+                        }
                     }
                 }
             }
