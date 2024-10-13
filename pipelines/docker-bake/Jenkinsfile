@@ -47,5 +47,9 @@ pipeline {
         failure {
             echo 'Build failed. Check logs for errors.'
         }
+        always {
+            sh 'docker buildx rm || true'
+            sh 'docker system prune -f --volumes'
+        }
     }
 }
