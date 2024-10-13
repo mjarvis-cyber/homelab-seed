@@ -4,14 +4,11 @@ pipeline {
     }
     parameters {
         string(name: 'REPO_URL', defaultValue: 'https://github.com/your-repo/your-repo.git', description: 'Path to the repo')
-        string(name: 'DOCKER_FILE_PATH', defaultValue: "path/to/Dockerfile", description: 'Path to Dockerfile')
-        string(name: 'IMAGE_NAME', defaultValue: "crap", description: 'Name of image')
-        string(name: 'IMAGE_TAG', defaultValue: "latest", description: 'Version of image')
+        string(name: 'DOCKER_BAKE_FILE', defaultValue: "path/to/docker-bake.hcl", description: 'Path to docker-bake.hcl')
     }
     environment {
         REGISTRY = "https://registry.pizzasec.com"
     }
-
     stages {
         stage('Clone Repository') {
             steps {
@@ -21,19 +18,25 @@ pipeline {
             }
         }
 
-        stage('Build Docker Images') {
+        stage('Build and Push Docker Images') {
             steps {
                 script {
-                    sh 'ls -laR'
-                    docker.withRegistry("${REGISTRY}", "docker-registry-creds") {
-                        def customImage = docker.build("${params.IMAGE_NAME}:${params.IMAGE_TAG}", "-f ${params.DOCKER_FILE_PATH} .")
-                        customImage.push()
+                    withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')]) {
+                        sh """
+                        docker run --rm \
+                          -v $(pwd):/app \
+                          build.sh \
+                          ${REGISTRY} \
+                          ${params.REPO_URL} \
+                          ${params.DOCKER_BAKE_FILE} \
+                          ${REGISTRY_USERNAME} \
+                          ${REGISTRY_PASSWORD}
+                        """
                     }
                 }
             }
         }
     }
-
     post {
         success {
             echo 'Docker images built and pushed successfully!'
