@@ -39,7 +39,7 @@ echo "${PASSWORD}" | docker login "https://${REGISTRY}" --username "${USERNAME}"
 docker buildx create --use || true
 
 # Build and push the image using docker buildx bake, overriding the 'tag' variable in the bake file
-docker buildx bake -f "${DOCKER_BAKE_FILE}" --set tag=${TAG} --push
+docker buildx bake -f "${DOCKER_BAKE_FILE}" --set TAG="${TAG}" --push
 
 # Cleanup
 cd ../ && rm -rf repo
