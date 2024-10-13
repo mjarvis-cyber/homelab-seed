@@ -4,6 +4,9 @@ pipeline {
             label 'patron'
         }
     }
+     options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
     parameters {
         string(name: 'TEMPLATE', defaultValue: 'ubuntu-24', description: 'Base OS for Patron')
         string(name: 'BRANCH', defaultValue: 'dev', description: 'Branch of the patron environment')

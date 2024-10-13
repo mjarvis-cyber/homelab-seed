@@ -2,9 +2,14 @@ pipeline {
     agent {
         label 'main'
     }
+     options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
     parameters {
-        string(name: 'REPO_URL', defaultValue: 'https://github.com/your-repo/your-repo.git', description: 'Path to the repo')
-        string(name: 'DOCKER_BAKE_FILE', defaultValue: "path/to/docker-bake.hcl", description: 'Path to docker-bake.hcl')
+        string(name: 'REPO_URL', defaultValue: 'https://gitlab.com/mjarvi2/nginx-container-testing', description: 'Path to the repo')
+        string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to build')
+        string(name: 'DOCKER_BAKE_FILE', defaultValue: "docker-bake.hcl", description: 'Path to docker-bake.hcl')
+        string(name: 'TAG', defaultValue: "latest", description: 'What to tag the build as')
     }
     environment {
         REGISTRY = "registry.pizzasec.com"
@@ -25,8 +30,10 @@ pipeline {
                             ${REGISTRY} \
                             ${params.REPO_URL} \
                             ${params.DOCKER_BAKE_FILE} \
+                            ${params.BRANCH} \
                             ${REGISTRY_USERNAME} \
-                            '${REGISTRY_PASSWORD}'
+                            '${REGISTRY_PASSWORD}' \
+                            ${params.TAG}
                         """
                     }
                 }
