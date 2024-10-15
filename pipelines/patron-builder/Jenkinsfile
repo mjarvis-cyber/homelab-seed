@@ -16,35 +16,23 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    checkout([$class: 'GitSCM',
-                        branches: [[name: "*/master"]],
-                        doGenerateSubmoduleConfigurations: false,
-                        extensions: [],
-                        userRemoteConfigs: [[url: 'https://github.com/OrangeSquirter/patron-devtools.git']]
-                    ])
-                    
+                    sh "ssh-keyscan github.com >> ~/.ssh/known_hosts"                   
                     checkout([$class: 'GitSCM',
                         branches: [[name: "*/${params.BRANCH}"]],
                         doGenerateSubmoduleConfigurations: false,
                         extensions: [],
-                        userRemoteConfigs: [[url: 'https://github.com/PatronC2/Patron.git']]
+                        userRemoteConfigs: [[
+                            url: 'git@github.com:PatronC2/Patron.git',
+                            credentialsId: 'internal-ssh-key'
+                        ]]
                     ])
                 }
             }
         }
         stage('Run Ansible Playbooks') {
-            agent {
-                dockerfile {
-                    filename 'patron-devtools/ansible/Dockerfile'
-                }
-            }
             steps {
                 script {
-                    DOCKER_IMAGE.inside {
-                        sh '''
-                        ls -la /app
-                        '''
-                    }
+                    sh 'ls -lah'
                 }
             }
         }
