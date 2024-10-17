@@ -23,7 +23,7 @@ pipeline {
                         extensions: [],
                         userRemoteConfigs: [[
                             url: 'git@github.com:PatronC2/Patron.git',
-                            credentialsId: 'internal-ssh-key'
+                            credentialsId: 'ssh-key'
                         ]]
                     ])
                 }
