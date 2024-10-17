@@ -1,7 +1,8 @@
 pipeline {
     agent {
-        dockerfile {
-            filename 'pipelines/box-builder/Dockerfile'
+        node {
+            label 'admin'
+            fallbackToMaster true
         }
     }
     options {
@@ -55,30 +56,45 @@ pipeline {
         }
         
         stage('Build Box') {
+            agent {
+                node {
+                    label 'admin'
+                    fallbackToMaster true
+                }
+            }
             steps {
-                script {
-                    dir('pipelines/box-builder') {
-                        def token_name = PROXMOX_API_CREDS.split(':')[0]
-                        def token_secret = PROXMOX_API_CREDS.split(':')[1]
-                        sh """
-                            echo "Build a VM"
-                            python box-creator.py \
-                                --proxmox_ip    ${params.PROXMOX_IP} \
-                                --proxmox_node  ${params.PROXMOX_NODE} \
-                                --proxmox_pool  ${params.PROXMOX_POOL} \
-                                --token_name    ${token_name} \
-                                --token_secret  ${token_secret} \
-                                --low_vmid      ${PROXMOX_LOW_VMID} \
-                                --high_vmid     ${PROXMOX_HIGH_VMID} \
-                                --template_name "${params.TEMPLATE}" \
-                                --vm_name       "${params.VM_NAME}" \
-                                --vm_role       "${params.ROLE}" \
-                                --vm_branch     "${params.BRANCH}" \
-                                --vm_cores      ${params.CORES} \
-                                --vm_memory     ${params.MEMORY} \
-                                --vm_storage    ${params.STORAGE} \
-                                --vm_network    ${params.NETWORK}
-                        """
+                stage('Run in Docker') {
+                    agent {
+                        dockerfile {
+                            filename 'pipelines/box-builder/Dockerfile'
+                        }
+                    }
+                    steps {
+                        script {
+                            dir('pipelines/box-builder') {
+                                def token_name = PROXMOX_API_CREDS.split(':')[0]
+                                def token_secret = PROXMOX_API_CREDS.split(':')[1]
+                                sh """
+                                    echo "Build a VM"
+                                    python box-creator.py \
+                                        --proxmox_ip    ${params.PROXMOX_IP} \
+                                        --proxmox_node  ${params.PROXMOX_NODE} \
+                                        --proxmox_pool  ${params.PROXMOX_POOL} \
+                                        --token_name    ${token_name} \
+                                        --token_secret  ${token_secret} \
+                                        --low_vmid      ${PROXMOX_LOW_VMID} \
+                                        --high_vmid     ${PROXMOX_HIGH_VMID} \
+                                        --template_name "${params.TEMPLATE}" \
+                                        --vm_name       "${params.VM_NAME}" \
+                                        --vm_role       "${params.ROLE}" \
+                                        --vm_branch     "${params.BRANCH}" \
+                                        --vm_cores      ${params.CORES} \
+                                        --vm_memory     ${params.MEMORY} \
+                                        --vm_storage    ${params.STORAGE} \
+                                        --vm_network    ${params.NETWORK}
+                                """
+                            }
+                        }
                     }
                 }
             }
