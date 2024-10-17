@@ -1,7 +1,7 @@
 pipeline {
     agent {
         node {
-            label 'admin' || 'master'
+            label 'admin || master'
         }
     }
     options {
@@ -57,7 +57,7 @@ pipeline {
         stage('Build Box') {
             agent {
                 node {
-                    label 'admin' || 'master'
+                    label 'admin || master'
                 }
             }
             stages {
