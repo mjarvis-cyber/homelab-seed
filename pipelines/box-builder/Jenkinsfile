@@ -2,7 +2,6 @@ pipeline {
     agent {
         node {
             label 'admin' || 'master'
-            fallbackToMaster true
         }
     }
     options {
@@ -61,7 +60,7 @@ pipeline {
                     label 'admin' || 'master'
                 }
             }
-            steps {
+            stages {
                 stage('Run in Docker') {
                     agent {
                         dockerfile {
