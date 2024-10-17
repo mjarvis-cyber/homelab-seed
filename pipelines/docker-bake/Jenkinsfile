@@ -15,26 +15,36 @@ pipeline {
         REGISTRY = "registry.pizzasec.com"
     }
     stages {
+        agent {
+        label 'main'
+        }
         stage('Build and Push Docker Images') {
             agent {
-                dockerfile {
-                    filename 'pipelines/docker-bake/Dockerfile'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
-                }
+                label 'main'
             }
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')]) {
-                        sh """
-                        /app/build.sh \
-                            ${REGISTRY} \
-                            ${params.REPO_URL} \
-                            ${params.DOCKER_BAKE_FILE} \
-                            ${params.BRANCH} \
-                            ${REGISTRY_USERNAME} \
-                            '${REGISTRY_PASSWORD}' \
-                            ${params.TAG}
-                        """
+            stages {
+                stage('Run in Docker') {
+                    agent {
+                        dockerfile {
+                            filename 'pipelines/docker-bake/Dockerfile'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock'
+                        }
+                    }
+                    steps {
+                        script {
+                            withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')]) {
+                                sh """
+                                /app/build.sh \
+                                    ${REGISTRY} \
+                                    ${params.REPO_URL} \
+                                    ${params.DOCKER_BAKE_FILE} \
+                                    ${params.BRANCH} \
+                                    ${REGISTRY_USERNAME} \
+                                    '${REGISTRY_PASSWORD}' \
+                                    ${params.TAG}
+                                """
+                            }
+                        }
                     }
                 }
             }
