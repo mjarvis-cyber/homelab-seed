@@ -1,8 +1,7 @@
 pipeline {
     agent {
-        node {
-            label 'admin'
-            fallbackToMaster true
+        dockerfile {
+            filename 'pipelines/jenkins-agent-builder/Dockerfile'
         }
     }
     options {
@@ -61,42 +60,26 @@ pipeline {
             }
         }
         stage('Configure Agent On Master') {
-            agent {
-                node {
-                    label 'admin'
-                    fallbackToMaster true
-                }
-            }
             steps {
-                stage('Run in Docker') {
-                    steps {
-                        script {
-                            dir('pipelines/jenkins-agent-builder') {
-                                sh """
-                                    echo "Set up agent on controller"
-                                    python generate-agent.py \
-                                        --jenkins-url   "http://${params.JENKINS_HOSTNAME}:8080" \
-                                        --agent-name    ${params.AGENT_NAME} \
-                                        --username      ${JENKINS_API_USER} \
-                                        --api-token     ${JENKINS_API_TOKEN} \
-                                        --label         ${params.NETWORK} \
-                                        --executors     ${params.AGENT_EXECUTORS} \
-                                        --secret-file   ${SECRET_FILE}
-                                """
-                                stash name: 'agent-secrets', includes: SECRET_FILE
-                            }
-                        }
+                script {
+                    dir('pipelines/jenkins-agent-builder') {
+                        sh """
+                            echo "Set up agent on controller"
+                            python generate-agent.py \
+                                --jenkins-url   "http://${params.JENKINS_HOSTNAME}:8080" \
+                                --agent-name    ${params.AGENT_NAME} \
+                                --username      ${JENKINS_API_USER} \
+                                --api-token     ${JENKINS_API_TOKEN} \
+                                --label         ${params.NETWORK} \
+                                --executors     ${params.AGENT_EXECUTORS} \
+                                --secret-file   ${SECRET_FILE}
+                        """
+                        stash name: 'agent-secrets', includes: SECRET_FILE
                     }
                 }
             }
         }
         stage('Build Box') {
-            agent {
-                node {
-                    label 'admin'
-                    fallbackToMaster true
-                }
-            }
             steps {
                 script {
                     def buildbox = build job: 'box-builder', 
@@ -131,7 +114,7 @@ pipeline {
                     dir('pipelines/jenkins-agent-builder') {
                         unstash 'agent-secrets'
                         unstash 'vm-metadata'
-                        withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
+                        withCredentials([sshUserPrivateKey(credentialsId: 'internal-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
                             sh """
                                 echo "Key file location: ${SSH_KEY_FILE}"
                                 ls -l ${SSH_KEY_FILE}
