@@ -15,9 +15,6 @@ pipeline {
         REGISTRY = "registry.pizzasec.com"
     }
     stages {
-        agent {
-        label 'main'
-        }
         stage('Build and Push Docker Images') {
             agent {
                 label 'main'
