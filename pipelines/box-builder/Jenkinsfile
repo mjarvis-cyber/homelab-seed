@@ -25,7 +25,6 @@ pipeline {
         PROXMOX_API_CREDS   = credentials('proxmox-api-token')
         PROXMOX_LOW_VMID    = "400"
         PROXMOX_HIGH_VMID   = "600"
-        STASH_NAME          = "vm_metadata_${BUILD_ID}"
     }
     stages {
         stage('Parameter Validation') {
@@ -92,7 +91,7 @@ pipeline {
                                         --vm_storage    ${params.STORAGE} \
                                         --vm_network    ${params.NETWORK}
                                 """
-                                stash name: "${env.STASH_NAME}", includes: "vm_metadata.json"
+                                archiveArtifacts artifacts: "vm_metadata.json", onlyIfSuccessful: true
                             }
                         }
                     }
@@ -102,12 +101,7 @@ pipeline {
     }
     post {
         success {
-            script {
-                unstash "${env.STASH_NAME}"
-                dir('pipelines/box-builder') {
-                    archiveArtifacts artifacts: "vm_metadata.json", onlyIfSuccessful: true
-                }
-            }
+            echo "Build completed successfully."
         }
     }
 }
