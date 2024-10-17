@@ -114,7 +114,7 @@ pipeline {
                     dir('pipelines/jenkins-agent-builder') {
                         unstash 'agent-secrets'
                         unstash 'vm-metadata'
-                        withCredentials([sshUserPrivateKey(credentialsId: 'internal-ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
+                        withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
                             sh """
                                 echo "Key file location: ${SSH_KEY_FILE}"
                                 ls -l ${SSH_KEY_FILE}
