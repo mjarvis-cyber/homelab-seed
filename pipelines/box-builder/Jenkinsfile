@@ -1,7 +1,7 @@
 pipeline {
     agent {
         node {
-            label 'admin'
+            label 'admin' || 'master'
             fallbackToMaster true
         }
     }
@@ -58,8 +58,7 @@ pipeline {
         stage('Build Box') {
             agent {
                 node {
-                    label 'admin'
-                    fallbackToMaster true
+                    label 'admin' || 'master'
                 }
             }
             steps {

@@ -11,6 +11,9 @@ pipeline {
     }
     stages {
         stage('Parameter Validation') {
+            agent {
+                label 'admin'
+            }
             steps {
                 script {
                     if (!params.VMID.matches('^[0-9]+$')) {
@@ -21,6 +24,9 @@ pipeline {
         }
         
         stage('Checkout') {
+            agent {
+                label 'admin'
+            }
             steps {
                 checkout([$class: 'GitSCM',
                     branches: [[name: '*/master']],
@@ -32,6 +38,9 @@ pipeline {
         }
         
         stage('Terminate Box') {
+            agent {
+                label 'admin'
+            }
             stages {
                 stage ('Execute within docker'){
                     agent {
