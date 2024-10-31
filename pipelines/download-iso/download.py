@@ -53,6 +53,9 @@ def main():
     
     print(f"Running upload_iso_to_proxmox {proxmox_ip}, {proxmox_node}, {storage}, {iso_path}, {token_name}, {token_secret}")
     upload_iso_to_proxmox(proxmox_ip, proxmox_node, storage, iso_path, token_name, token_secret)
+    
+    os.remove(iso_path)
+    print(f"Removed ISO from {iso_path}")
 
 if __name__ == "__main__":
     main()

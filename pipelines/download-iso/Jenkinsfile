@@ -39,6 +39,7 @@ pipeline {
                     agent {
                         dockerfile {
                             filename 'pipelines/download-iso/Dockerfile'
+                            args '-v /tmp:/tmp'
                         }
                     }
                     steps {
