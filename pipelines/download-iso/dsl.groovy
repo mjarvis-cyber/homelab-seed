@@ -1,5 +1,5 @@
 
-pipelineJob('iso-downloader') {
+pipelineJob('download-iso') {
     displayName('Image Downloader')
     description('Downloads an iso image to a proxmox server')
 
