@@ -12,18 +12,23 @@ def download_iso(iso_url, output_path):
     else:
         response.raise_for_status()
 
-def upload_iso_to_proxmox(proxmox_ip, node, storage, iso_path, token_name, token_secret):
+def upload_iso_to_proxmox(proxmox_ip, node, storage, iso_path, token_name, token_secret, chunk_size=1024*1024):
     api_url = f"https://{proxmox_ip}:8006/api2/json/nodes/{node}/storage/{storage}/upload"
     headers = {
         "Authorization": f"PVEAPIToken={token_name}={token_secret}"
     }
     
     with open(iso_path, 'rb') as file:
+        def file_chunk_generator(f, chunk_size):
+            while chunk := f.read(chunk_size):
+                yield chunk
+        
         files = {
             'content': (None, 'iso'),
-            'filename': (os.path.basename(iso_path), file)
+            'filename': (os.path.basename(iso_path), file_chunk_generator(file, chunk_size))
         }
-        response = requests.post(api_url, headers=headers, files=files, verify=False, stream=True)
+
+        response = requests.post(api_url, headers=headers, files=files, verify=False)
         
         if response.status_code == 200:
             print(f"Uploaded ISO {iso_path} to {node}/{storage}")
