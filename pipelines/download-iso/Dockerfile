@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.13-slim
 
 RUN apt-get update && apt-get install -y \
     jq
@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
 RUN pip install cryptography \
     paramiko \
     requests \
-    scp
+    scp \
+    requests-toolbelt
 
 COPY . /app
 WORKDIR /app

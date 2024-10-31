@@ -1,5 +1,6 @@
 import os
 import requests
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 import argparse
 
 def download_iso(iso_url, output_path):
@@ -17,18 +18,18 @@ def upload_iso_to_proxmox(proxmox_ip, node, storage, iso_path, token_name, token
     headers = {
         "Authorization": f"PVEAPIToken={token_name}={token_secret}"
     }
-    
-    with open(iso_path, 'rb') as file:
-        def file_chunk_generator(f, chunk_size):
-            while chunk := f.read(chunk_size):
-                yield chunk
-        
-        files = {
-            'content': (None, 'iso'),
-            'filename': (os.path.basename(iso_path), file_chunk_generator(file, chunk_size))
-        }
 
-        response = requests.post(api_url, headers=headers, files=files, verify=False)
+    with open(iso_path, 'rb') as file:
+        encoder = MultipartEncoder(
+            fields={
+                'content': 'iso',
+                'filename': (os.path.basename(iso_path), file, 'application/octet-stream')
+            }
+        )
+        
+        headers['Content-Type'] = encoder.content_type
+
+        response = requests.post(api_url, headers=headers, data=encoder, verify=False)
         
         if response.status_code == 200:
             print(f"Uploaded ISO {iso_path} to {node}/{storage}")
