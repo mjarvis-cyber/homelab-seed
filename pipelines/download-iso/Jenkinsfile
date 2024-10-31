@@ -33,7 +33,7 @@ pipeline {
         stage('Download and Upload ISO') {
             agent {
                 dockerfile {
-                    filename 'pipelines/box-terminator/Dockerfile'
+                    filename 'pipelines/download-iso/Dockerfile'
                 }
             }
             steps {
