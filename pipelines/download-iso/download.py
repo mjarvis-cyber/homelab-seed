@@ -28,7 +28,7 @@ def upload_iso_to_proxmox(proxmox_ip, node, storage, iso_path, token_name, token
         response.raise_for_status()
 
 def main():
-    parser = argparse.ArgumentParser(description="Delete a Proxmox VM")
+    parser = argparse.ArgumentParser(description="Download and upload an ISO to Proxmox")
     parser.add_argument("--proxmox_ip", required=True, help="Proxmox IP address")
     parser.add_argument("--proxmox_node", required=True, help="Proxmox node")
     parser.add_argument("--iso_url", required=True, help="URL to get the iso from")
@@ -37,17 +37,20 @@ def main():
     
     args = parser.parse_args()
 
-    proxmox_ip      = args.proxmox_ip
-    proxmox_node    = args.proxmox_node
-    token_name      = args.token_name
-    token_secret    = args.token_secret
-    storage         = "local"
-    iso_url         = args.iso_url
-    iso_path        = "/tmp/downloaded_image.iso"
+    proxmox_ip = args.proxmox_ip
+    proxmox_node = args.proxmox_node
+    token_name = args.token_name
+    token_secret = args.token_secret
+    storage = "local"
+    iso_url = args.iso_url
+
+    # Extract the filename from the URL and set the path in /tmp
+    iso_filename = os.path.basename(iso_url)
+    iso_path = f"/tmp/{iso_filename}"
     
     print(f"Running download_iso({iso_url})")
-
     download_iso(iso_url, iso_path)
+    
     print(f"Running upload_iso_to_proxmox {proxmox_ip}, {proxmox_node}, {storage}, {iso_path}, {token_name}, {token_secret}")
     upload_iso_to_proxmox(proxmox_ip, proxmox_node, storage, iso_path, token_name, token_secret)
 
