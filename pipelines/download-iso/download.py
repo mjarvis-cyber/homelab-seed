@@ -17,15 +17,18 @@ def upload_iso_to_proxmox(proxmox_ip, node, storage, iso_path, token_name, token
     headers = {
         "Authorization": f"PVEAPIToken={token_name}={token_secret}"
     }
-    files = {
-        'content': 'iso',
-        'filename': (os.path.basename(iso_path), open(iso_path, 'rb'))
-    }
-    response = requests.post(api_url, headers=headers, files=files, verify=False)
-    if response.status_code == 200:
-        print(f"Uploaded ISO {iso_path} to {node}/{storage}")
-    else:
-        response.raise_for_status()
+    
+    with open(iso_path, 'rb') as file:
+        files = {
+            'content': (None, 'iso'),
+            'filename': (os.path.basename(iso_path), file)
+        }
+        response = requests.post(api_url, headers=headers, files=files, verify=False, stream=True)
+        
+        if response.status_code == 200:
+            print(f"Uploaded ISO {iso_path} to {node}/{storage}")
+        else:
+            response.raise_for_status()
 
 def main():
     parser = argparse.ArgumentParser(description="Download and upload an ISO to Proxmox")
