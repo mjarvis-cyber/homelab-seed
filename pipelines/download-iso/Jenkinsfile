@@ -32,23 +32,30 @@ pipeline {
 
         stage('Download and Upload ISO') {
             agent {
-                dockerfile {
-                    filename 'pipelines/download-iso/Dockerfile'
-                }
+                label 'admin'
             }
-            steps {
-                script {
-                    dir('pipelines/download-iso') {
-                        def token_name = PROXMOX_API_CREDS.split(':')[0]
-                        def token_secret = PROXMOX_API_CREDS.split(':')[1]
-                        sh """
-                            python download.py \
-                                --proxmox_ip    ${params.PROXMOX_IP} \
-                                --proxmox_node  ${params.PROXMOX_NODE} \
-                                --iso_url       ${params.ISO_URL} \
-                                --token_name    ${token_name} \
-                                --token_secret  ${token_secret}
-                        """
+            stages {
+                stage ('Execute within docker'){
+                    agent {
+                        dockerfile {
+                            filename 'pipelines/download-iso/Dockerfile'
+                        }
+                    }
+                    steps {
+                        script {
+                            dir('pipelines/download-iso') {
+                                def token_name = PROXMOX_API_CREDS.split(':')[0]
+                                def token_secret = PROXMOX_API_CREDS.split(':')[1]
+                                sh """
+                                    python download.py \
+                                        --proxmox_ip    ${params.PROXMOX_IP} \
+                                        --proxmox_node  ${params.PROXMOX_NODE} \
+                                        --iso_url       ${params.ISO_URL} \
+                                        --token_name    ${token_name} \
+                                        --token_secret  ${token_secret}
+                                """
+                            }
+                        }
                     }
                 }
             }
