@@ -44,7 +44,12 @@ def main():
     storage         = "local"
     iso_url         = args.iso_url
     iso_path        = "/tmp/downloaded_image.iso"
+    
+    print(f"Running download_iso({iso_url})")
 
     download_iso(iso_url, iso_path)
+    print(f"Running upload_iso_to_proxmox {proxmox_ip}, {proxmox_node}, {storage}, {iso_path}, {token_name}, {token_secret}")
     upload_iso_to_proxmox(proxmox_ip, proxmox_node, storage, iso_path, token_name, token_secret)
 
+if __name__ == "__main__":
+    main()
