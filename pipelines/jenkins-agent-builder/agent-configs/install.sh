@@ -56,9 +56,6 @@ do
     sudo apt-get remove -y $pkg;
 done
 
-# Allow docker socket access
-sudo chmod 777 /var/run/docker.sock
-
 # Install Docker
 sudo apt-get update
 sudo apt install -y ca-certificates curl
@@ -77,15 +74,23 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 # Enable and start Docker service
 sudo systemctl enable --now docker
 
+# Allow docker socket access
+sudo chmod 777 /var/run/docker.sock
+
 # Configure Docker to allow insecure registries
 echo "{ \"insecure-registries\":[\"$DOCKER_REGISTRY\"] }" | sudo tee /etc/docker/daemon.json
 sudo systemctl restart docker
+
+TOTAL_MEM=$(free -g | grep Mem: | awk '{print $2}')
+MEM_TO_ALLOCATE=$TOTAL_MEM-1
+echo "Allocating $MEM_TO_ALLOCATE to Jenkins"
 
 # Build Jenkins agent Docker image
 docker build \
   --build-arg JENKINS_URL=http://$JENKINS_IP:$JENKINS_PORT/ \
   --build-arg JENKINS_AGENT_NAME=$JENKINS_AGENT_NAME \
   --build-arg JENKINS_SECRET=$JENKINS_SECRET \
+  --env JAVA_OPTS=-Xmx$MEM_TO_ALLOCATEg \
   -t jenkins-agent:latest /home/ubuntu/
 
 # Run Jenkins agent container with Docker socket mounted
