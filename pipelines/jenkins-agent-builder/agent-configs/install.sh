@@ -56,6 +56,9 @@ do
     sudo apt-get remove -y $pkg;
 done
 
+# Allow docker socket access
+sudo chmod 777 /var/run/docker.sock
+
 # Install Docker
 sudo apt-get update
 sudo apt install -y ca-certificates curl
