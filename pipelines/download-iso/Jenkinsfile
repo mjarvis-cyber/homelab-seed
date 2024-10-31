@@ -38,16 +38,18 @@ pipeline {
             }
             steps {
                 script {
-                    def token_name = PROXMOX_API_CREDS.split(':')[0]
-                    def token_secret = PROXMOX_API_CREDS.split(':')[1]
-                    sh """
-                        python download.py \
-                            --proxmox_ip    ${params.PROXMOX_IP} \
-                            --proxmox_node  ${params.PROXMOX_NODE} \
-                            --iso_url       ${params.ISO_URL} \
-                            --token_name    ${token_name} \
-                            --token_secret  ${token_secret}
-                    """
+                    dir('pipelines/download-iso') {
+                        def token_name = PROXMOX_API_CREDS.split(':')[0]
+                        def token_secret = PROXMOX_API_CREDS.split(':')[1]
+                        sh """
+                            python download.py \
+                                --proxmox_ip    ${params.PROXMOX_IP} \
+                                --proxmox_node  ${params.PROXMOX_NODE} \
+                                --iso_url       ${params.ISO_URL} \
+                                --token_name    ${token_name} \
+                                --token_secret  ${token_secret}
+                        """
+                    }
                 }
             }
         }
