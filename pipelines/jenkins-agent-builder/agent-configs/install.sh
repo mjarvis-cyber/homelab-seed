@@ -90,11 +90,11 @@ docker build \
   --build-arg JENKINS_URL=http://$JENKINS_IP:$JENKINS_PORT/ \
   --build-arg JENKINS_AGENT_NAME=$JENKINS_AGENT_NAME \
   --build-arg JENKINS_SECRET=$JENKINS_SECRET \
-  --env JAVA_OPTS=-Xmx$MEM_TO_ALLOCATEg \
   -t jenkins-agent:latest /home/ubuntu/
 
 # Run Jenkins agent container with Docker socket mounted
 docker run -d \
   --name jenkins-agent \
+  --env JAVA_OPTS=-Xmx$MEM_TO_ALLOCATEg \
   -v /var/run/docker.sock:/var/run/docker.sock \
   jenkins-agent:latest
