@@ -82,8 +82,9 @@ echo "{ \"insecure-registries\":[\"$DOCKER_REGISTRY\"] }" | sudo tee /etc/docker
 sudo systemctl restart docker
 
 TOTAL_MEM=$(free -g | grep Mem: | awk '{print $2}')
-MEM_TO_ALLOCATE=$TOTAL_MEM-1
-echo "Allocating $MEM_TO_ALLOCATE to Jenkins"
+MEM_TO_ALLOCATE=$(expr $TOTAL_MEM - 1 )
+JAVA_OPTS="-Xmx${MEM_TO_ALLOCATE}g"
+echo "Allocating $MEM_TO_ALLOCATE GB to Jenkins"
 
 # Build Jenkins agent Docker image
 docker build \
@@ -95,6 +96,6 @@ docker build \
 # Run Jenkins agent container with Docker socket mounted
 docker run -d \
   --name jenkins-agent \
-  --env JAVA_OPTS=-Xmx$MEM_TO_ALLOCATEg \
+  --env JAVA_OPTS=$JAVA_OPTS \
   -v /var/run/docker.sock:/var/run/docker.sock \
   jenkins-agent:latest
