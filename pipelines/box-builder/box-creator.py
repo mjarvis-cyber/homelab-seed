@@ -269,11 +269,28 @@ def main():
     vm_storage      = args.vm_storage
     vm_network      = args.vm_network
     vmid=create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_branch, vm_cores, vm_memory, vm_storage, vm_network)
-    print("Sleep for a minute to allow the box to bootstrap")
-    time.sleep(60)
-    file_name="vm_metadata.json"
-    ipv4, ipv6 = get_vm_ip(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
-    print(f"VM IP: {ipv4}, {ipv6}")
+    print("Waiting for the VM to retrieve its IP address (up to 5 minutes)...")
+    file_name = "vm_metadata.json"
+    ipv4, ipv6 = None, None
+    start_time = time.time()
+    timeout = 300
+    check_interval = 15
+
+    while time.time() - start_time < timeout:
+        ipv4, ipv6 = get_vm_ip(proxmox_ip, proxmox_node, token_name, token_secret, vmid)
+        if ipv4 or ipv6:
+            print(f"VM IP: {ipv4}, {ipv6}")
+            break
+        print(f"No IP address found yet. Retrying in {check_interval} seconds...")
+        time.sleep(check_interval)
+
+    if not (ipv4 or ipv6):
+        print("Failed to retrieve VM IP address within the timeout period.")
+        raise TimeoutError("Could not fetch VM IP within 5 minutes.")
+
+    write_file(proxmox_ip, proxmox_node, proxmox_pool, template_name, vm_name, vm_role, vm_branch, vm_cores, vm_memory, vm_storage, vm_network, vmid, ipv4, ipv6, file_name)
+    print(f"Wrote VM data to {file_name}")
+
     write_file(proxmox_ip, proxmox_node, proxmox_pool, template_name, vm_name, vm_role, vm_branch, vm_cores, vm_memory, vm_storage, vm_network, vmid, ipv4, ipv6, file_name)
     print(f"Wrote VM data to {file_name}")
     print(f"DUNZO!!!")
