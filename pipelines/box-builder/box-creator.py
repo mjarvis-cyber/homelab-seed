@@ -181,22 +181,29 @@ def is_vm_running(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     return response.get('data', {}).get('status') == 'running'
 
 def get_vm_ip(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
-    """Retrieve the VM's IP addresses if it's running."""
+    """Retrieve the VM's IP addresses if it's running and the guest agent is available."""
     if not is_vm_running(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
         print(f"VM {vmid} is not running. Cannot retrieve network interfaces.")
         return None, None
-    
+
     cluster_query = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/agent/network-get-interfaces"
-    response = get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret)
-    ipv4, ipv6 = None, None
-    print(f"Network data: {response}")
-    for interface in response['data']['result']:
-        for ip in interface.get('ip-addresses', []):
-            if ip['ip-address-type'] == 'ipv4' and ip['ip-address'] != '127.0.0.1':
-                ipv4 = ip['ip-address']
-            if ip['ip-address-type'] == 'ipv6' and ip['ip-address'] != '::1':
-                ipv6 = ip['ip-address']
-    return ipv4, ipv6
+    try:
+        response = get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret)
+        ipv4, ipv6 = None, None
+        print(f"Network data: {response}")
+        for interface in response['data']['result']:
+            for ip in interface.get('ip-addresses', []):
+                if ip['ip-address-type'] == 'ipv4' and ip['ip-address'] != '127.0.0.1':
+                    ipv4 = ip['ip-address']
+                if ip['ip-address-type'] == 'ipv6' and ip['ip-address'] != '::1':
+                    ipv6 = ip['ip-address']
+        return ipv4, ipv6
+    except requests.exceptions.HTTPError as e:
+        if "QEMU guest agent is not running" in str(e):
+            print("QEMU guest agent is not running. Retrying...")
+        else:
+            print(f"Unexpected error: {e}")
+        return None, None
 
 def create_box(proxmox_ip, proxmox_node, proxmox_pool, token_name, token_secret, low_vmid, high_vmid, template_name, vm_name, vm_role, vm_branch, vm_cores, vm_memory, vm_storage, vm_network):
     print(f"Picking a VMID between {low_vmid} and {high_vmid}")
