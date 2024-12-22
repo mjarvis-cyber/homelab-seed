@@ -174,11 +174,21 @@ def start_vm(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
     start_endpoint=f"/api2/json/nodes/{proxmox_node}/qemu/{vmid}/status/start"
     post_cluster_query(cluster_query=start_endpoint, data=None, proxmox_ip=proxmox_ip, token_name=token_name, token_secret=token_secret)
 
+def is_vm_running(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
+    """Check if the VM is currently running."""
+    cluster_query = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/status/current"
+    response = get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret)
+    return response.get('data', {}).get('status') == 'running'
+
 def get_vm_ip(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
+    """Retrieve the VM's IP addresses if it's running."""
+    if not is_vm_running(proxmox_ip, proxmox_node, token_name, token_secret, vmid):
+        print(f"VM {vmid} is not running. Cannot retrieve network interfaces.")
+        return None, None
+    
     cluster_query = f"api2/json/nodes/{proxmox_node}/qemu/{vmid}/agent/network-get-interfaces"
     response = get_cluster_query_output(cluster_query, proxmox_ip, token_name, token_secret)
-    ipv4=None
-    ipv6=None
+    ipv4, ipv6 = None, None
     print(f"Network data: {response}")
     for interface in response['data']['result']:
         for ip in interface.get('ip-addresses', []):
