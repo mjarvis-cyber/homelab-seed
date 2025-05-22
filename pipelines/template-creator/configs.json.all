@@ -9,6 +9,12 @@
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCp0HmuAlP2fDW7nJGKUZr108doGhJP2Wu3CqgzlNB+acc2bWVwMLO5WisK2QMt0x0w/I+BhTgIqEhQIaF5I5iZMLOHWWiv7ssq4kv1iCDR8QQMraqBb0oFOFCSg7tEiJKeABt0Mb7bWQKUO2fLXU132xCR93A8RSj3B2JeEcAXrBizsDsU146fShmAnbdfcfD7/h3s6ElXC4vhRQZwi7s0zd7GrUySTKcNpXE37dE0FT9W1wrxOtgZ5gIfTynZqo+a2vkMsKAw9jHwzIsCgKhKeoUGQyLXsrvr1sMPoJIUlQhFZHiiCg5QrwUO2VzHh4myccMct4FTUeN7GJnecSAhW047BE7Wuh1lq/NXs6STkvkhYWhgmZfRp+VavJzW3bjGANwHBFYvhRnne15YsqUdo/GNcYvsT9t0XOoKsj6yAseGJXJpjLaocA3YjYzOTHtoulD/dxPhoy8x6rLJBDlrp+NAHDBufGPZudpZ4Urtl6LCkGwVwZghaisMajOjx/E= wsl@elon-musk"
     ],
     "templates": {
+        "al2023": {
+            "README": "grab the latest kvm image from https://cdn.amazonlinux.com/al2023/os-images",
+            "user": "ec2-user",
+            "password": "password1!",
+            "img_url": "https://cdn.amazonlinux.com/al2023/os-images/2023.7.20250512.0/kvm/al2023-kvm-2023.7.20250512.0-kernel-6.1-x86_64.xfs.gpt.qcow2"
+        },
         "ubuntu-18": {
             "README": "This should always work",
             "user": "ubuntu",
