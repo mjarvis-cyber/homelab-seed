@@ -131,20 +131,20 @@ pipeline {
                         }
 
                         withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
-                            sh """
-                                chmod 600 ${SSH_KEY_FILE}
-                                sh "ls -l ${SSH_KEY_FILE}"
-                                sh "head --lines 2 ${SSH_KEY_FILE}"
+                            sh(script: """
+                                chmod 600 "$SSH_KEY_FILE"
+                                ls -l "$SSH_KEY_FILE"
+                                head -n 2 "$SSH_KEY_FILE"
                                 python deploy-agent.py \
                                     --secret-file ${SECRET_FILE} \
                                     --metadata-file vm_metadata.json \
-                                    --ssh-key-file ${SSH_KEY_FILE} \
+                                    --ssh-key-file "$SSH_KEY_FILE" \
                                     --scp-dir "agent-configs" \
                                     --agent-name ${params.AGENT_NAME} \
                                     --master-ip ${params.JENKINS_HOSTNAME} \
                                     --docker-registry ${params.DOCKER_REGISTRY} \
                                     --ssh-user ${params.SSH_USERNAME}
-                            """
+                            """)
                         }
                     }
                 }
