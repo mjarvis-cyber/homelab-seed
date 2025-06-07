@@ -24,6 +24,9 @@ pipeline {
         string(name: 'AGENT_NAME', defaultValue: 'main', description: 'Name of the new agent')
         string(name: 'AGENT_EXECUTORS', defaultValue: '10', description: 'Number of executors for the new agent')
         string(name: 'DOCKER_REGISTRY', defaultValue: 'registry.pizzasec.com', description: 'HTTPS endpoint for private docker registry')
+        booleanParam(name: 'USE_EXISTING_VM', defaultValue: false, description: 'Skip box-builder and use an existing VM IP')
+        string(name: 'EXISTING_AGENT_IP', defaultValue: '', description: 'If using existing VM, provide its IP address')
+
     }
     environment {
         JENKINS_API_USER    = "jenkins"
@@ -80,9 +83,12 @@ pipeline {
             }
         }
         stage('Build Box') {
+            when {
+                expression { return !params.USE_EXISTING_VM }
+            }
             steps {
                 script {
-                    def buildbox = build job: 'box-builder', 
+                    def buildbox = build job: 'box-builder',
                         parameters: [
                             string(name: 'PROXMOX_IP',      value: params.PROXMOX_IP),
                             string(name: 'PROXMOX_NODE',    value: params.PROXMOX_NODE),
@@ -95,12 +101,12 @@ pipeline {
                             string(name: 'ROLE',            value: params.ROLE),
                             string(name: 'BRANCH',          value: params.BRANCH),
                             string(name: 'NETWORK',         value: params.NETWORK)
-                        ], 
-                        propagate: true, 
+                        ],
+                        propagate: true,
                         wait: true
 
                     copyArtifacts(
-                        projectName: 'box-builder', 
+                        projectName: 'box-builder',
                         selector: specific("${buildbox.number}"),
                         filter: 'vm_metadata.json'
                     )
@@ -113,18 +119,22 @@ pipeline {
                 script {
                     dir('pipelines/jenkins-agent-builder') {
                         unstash 'agent-secrets'
-                        unstash 'vm-metadata'
+                        if (params.USE_EXISTING_VM) {
+                            writeFile file: 'vm_metadata.json', text: """{
+        "ip": "${params.EXISTING_AGENT_IP}",
+        "name": "${params.VM_NAME}"
+        }"""
+                        } else {
+                            unstash 'vm-metadata'
+                        }
+
                         withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key', keyFileVariable: 'SSH_KEY_FILE')]) {
                             sh """
-                                echo "Key file location: ${SSH_KEY_FILE}"
-                                ls -l ${SSH_KEY_FILE}
-                                ls -la
-                                cat ${SSH_KEY_FILE} > crap.pem
-                                chmod 600 crap.pem
+                                chmod 600 ${SSH_KEY_FILE}
                                 python deploy-agent.py \
                                     --secret-file ${SECRET_FILE} \
                                     --metadata-file vm_metadata.json \
-                                    --ssh-key-file crap.pem \
+                                    --ssh-key-file ${SSH_KEY_FILE} \
                                     --scp-dir "agent-configs" \
                                     --agent-name ${params.AGENT_NAME} \
                                     --master-ip ${params.JENKINS_HOSTNAME} \
