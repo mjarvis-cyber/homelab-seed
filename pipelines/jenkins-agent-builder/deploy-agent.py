@@ -34,8 +34,8 @@ def find_matching_ip(vm_ipv4, network_info):
             return ip
     return None
 
-def scp_directory_to_remote(ssh_key, path_to_scp, remote_host, username='ubuntu'):
-    key = paramiko.RSAKey(file_obj=ssh_key)
+def scp_directory_to_remote(ssh_key_path, path_to_scp, remote_host, username='ubuntu'):
+    key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(remote_host, username=username, pkey=key)
@@ -90,14 +90,12 @@ def main():
 
     with open(args.secret_file) as f:
         secret = f.read().strip()
-    with open(args.ssh_key_file, 'rb') as ssh_key_file:
-        network_info = get_network_info(args.master_ip, args.ssh_key_file, args.ssh_user)
+    network_info = get_network_info(args.master_ip, args.ssh_key_file, args.ssh_user)
     master_ip = find_matching_ip(vm_ipv4, network_info)
     if not master_ip:
         print("No matching IP found in the same subnet.")
         return
-    with open(args.ssh_key_file) as ssh_key_file:
-        scp_directory_to_remote(ssh_key_file, args.scp_dir, vm_ipv4, args.ssh_user)
+    scp_directory_to_remote(args.ssh_key_file, args.scp_dir, vm_ipv4, args.ssh_user)
     run_remote_command(args.ssh_key_file, vm_ipv4, master_ip, args.agent_name, secret, args.docker_registry, args.ssh_user)
 
 if __name__ == "__main__":
