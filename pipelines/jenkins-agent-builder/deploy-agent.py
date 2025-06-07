@@ -5,8 +5,18 @@ import re
 from ipaddress import ip_network, ip_address
 import os
 
+def load_private_key(path):
+    from paramiko import RSAKey, ECDSAKey, Ed25519Key, DSSKey
+    for key_cls in [Ed25519Key, RSAKey, ECDSAKey, DSSKey]:
+        try:
+            return key_cls.from_private_key_file(path)
+        except Exception:
+            continue
+    raise ValueError(f"Unsupported or unreadable private key: {path}")
+
 def get_network_info(master_ip, ssh_key_path, ssh_user):
-    key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
+    key = load_private_key(ssh_key_path)
+    print(f"Using SSH key type: {type(key).__name__}")
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(master_ip, username=ssh_user, pkey=key)
@@ -35,7 +45,7 @@ def find_matching_ip(vm_ipv4, network_info):
     return None
 
 def scp_directory_to_remote(ssh_key_path, path_to_scp, remote_host, username='ubuntu'):
-    key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
+    key = load_private_key(ssh_key_path)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(remote_host, username=username, pkey=key)
@@ -61,7 +71,7 @@ def scp_directory_to_remote(ssh_key_path, path_to_scp, remote_host, username='ub
 def run_remote_command(ssh_key_path, remote_host, master_ip, agent_name, secret, docker_registry, username='ubuntu'):
     makeexec = f"chmod +x /home/{username}/install.sh"
     command = f"sudo /home/{username}/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret} -d {docker_registry}"
-    key = paramiko.RSAKey.from_private_key_file(ssh_key_path)
+    key = load_private_key(ssh_key_path)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(remote_host, username=username, pkey=key)
