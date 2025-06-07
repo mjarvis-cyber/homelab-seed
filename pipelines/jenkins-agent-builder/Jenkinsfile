@@ -135,6 +135,8 @@ pipeline {
                                 chmod 600 "$SSH_KEY_FILE"
                                 ls -l "$SSH_KEY_FILE"
                                 head -n 2 "$SSH_KEY_FILE"
+                                echo "running whoami:"
+                                whoami
                                 python deploy-agent.py \
                                     --secret-file ${SECRET_FILE} \
                                     --metadata-file vm_metadata.json \

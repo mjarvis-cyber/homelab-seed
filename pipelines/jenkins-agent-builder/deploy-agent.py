@@ -90,7 +90,7 @@ def main():
 
     with open(args.secret_file) as f:
         secret = f.read().strip()
-    ssh_key_file = '/var/jenkins_home/.ssh/id_rsa'
+    ssh_key_file = '/root/.ssh/id_rsa'
     network_info = get_network_info(args.master_ip, ssh_key_file, args.ssh_user)
     master_ip = find_matching_ip(vm_ipv4, network_info)
     if not master_ip:
