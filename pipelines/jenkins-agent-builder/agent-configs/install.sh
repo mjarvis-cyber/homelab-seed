@@ -7,7 +7,7 @@ usage() {
 }
 
 # Parse command-line arguments
-while getopts ":i:p:n:s:d:" opt; do
+while getopts ":i:p:n:s:d:u:" opt; do
     case ${opt} in
         i)
             JENKINS_IP=${OPTARG}
@@ -23,6 +23,9 @@ while getopts ":i:p:n:s:d:" opt; do
             ;;
         d)
             DOCKER_REGISTRY=${OPTARG}
+            ;;
+        u)
+            USER=${OPTARG}
             ;;            
         \?)
             echo "Invalid option: -${OPTARG}" >&2
@@ -91,7 +94,7 @@ docker build \
   --build-arg JENKINS_URL=http://$JENKINS_IP:$JENKINS_PORT/ \
   --build-arg JENKINS_AGENT_NAME=$JENKINS_AGENT_NAME \
   --build-arg JENKINS_SECRET=$JENKINS_SECRET \
-  -t jenkins-agent:latest /home/ubuntu/
+  -t jenkins-agent:latest /home/$USER/
 
 # Run Jenkins agent container with Docker socket mounted
 docker run -d \

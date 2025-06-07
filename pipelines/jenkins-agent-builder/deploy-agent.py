@@ -70,7 +70,7 @@ def scp_directory_to_remote(ssh_key_path, path_to_scp, remote_host, username='ub
 
 def run_remote_command(ssh_key_path, remote_host, master_ip, agent_name, secret, docker_registry, username='ubuntu'):
     makeexec = f"chmod +x /home/{username}/install.sh"
-    command = f"sudo /home/{username}/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret} -d {docker_registry}"
+    command = f"sudo /home/{username}/install.sh -i {master_ip} -p 8080 -n {agent_name} -s {secret} -d {docker_registry} -u {username}"
     key = load_private_key(ssh_key_path)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
