@@ -26,6 +26,7 @@ pipeline {
         string(name: 'DOCKER_REGISTRY', defaultValue: 'registry.pizzasec.com', description: 'HTTPS endpoint for private docker registry')
         booleanParam(name: 'USE_EXISTING_VM', defaultValue: false, description: 'Skip box-builder and use an existing VM IP')
         string(name: 'EXISTING_AGENT_IP', defaultValue: '', description: 'If using existing VM, provide its IP address')
+        string(name: 'SSH_USERNAME', defaultValue: 'victim', description: 'User to ssh with to new jenkins agents')
 
     }
     environment {
@@ -139,7 +140,8 @@ pipeline {
                                     --scp-dir "agent-configs" \
                                     --agent-name ${params.AGENT_NAME} \
                                     --master-ip ${params.JENKINS_HOSTNAME} \
-                                    --docker-registry ${params.DOCKER_REGISTRY}
+                                    --docker-registry ${params.DOCKER_REGISTRY} \
+                                    --ssh-user ${params.SSH_USERNAME}
                             """
                         }
                     }
