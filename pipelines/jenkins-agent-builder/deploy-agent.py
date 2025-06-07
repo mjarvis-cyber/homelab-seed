@@ -90,13 +90,14 @@ def main():
 
     with open(args.secret_file) as f:
         secret = f.read().strip()
-    network_info = get_network_info(args.master_ip, args.ssh_key_file, args.ssh_user)
+    ssh_key_file = '/var/jenkins_home/.ssh/id_rsa'
+    network_info = get_network_info(args.master_ip, ssh_key_file, args.ssh_user)
     master_ip = find_matching_ip(vm_ipv4, network_info)
     if not master_ip:
         print("No matching IP found in the same subnet.")
         return
-    scp_directory_to_remote(args.ssh_key_file, args.scp_dir, vm_ipv4, args.ssh_user)
-    run_remote_command(args.ssh_key_file, vm_ipv4, master_ip, args.agent_name, secret, args.docker_registry, args.ssh_user)
+    scp_directory_to_remote(ssh_key_file, args.scp_dir, vm_ipv4, args.ssh_user)
+    run_remote_command(ssh_key_file, vm_ipv4, master_ip, args.agent_name, secret, args.docker_registry, args.ssh_user)
 
 if __name__ == "__main__":
     main()
