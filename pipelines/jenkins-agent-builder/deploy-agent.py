@@ -90,7 +90,8 @@ def main():
 
     with open(args.secret_file) as f:
         secret = f.read().strip()
-    network_info = get_network_info(args.master_ip, open(args.ssh_key_file, 'r'), args.ssh_user)
+    with open(args.ssh_key_file, 'rb') as ssh_key_file:
+        network_info = get_network_info(args.master_ip, ssh_key_file, args.ssh_user)
     master_ip = find_matching_ip(vm_ipv4, network_info)
     if not master_ip:
         print("No matching IP found in the same subnet.")
