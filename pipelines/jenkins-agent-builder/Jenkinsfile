@@ -121,9 +121,10 @@ pipeline {
                         unstash 'agent-secrets'
                         if (params.USE_EXISTING_VM) {
                             writeFile file: 'vm_metadata.json', text: """{
-        "ip": "${params.EXISTING_AGENT_IP}",
-        "name": "${params.VM_NAME}"
-        }"""
+    "vm_ipv4": "${params.EXISTING_AGENT_IP}",
+    "vm_name": "${params.VM_NAME}",
+    "role": "${params.ROLE}"
+}"""
                         } else {
                             unstash 'vm-metadata'
                         }
