@@ -13,10 +13,41 @@
 	"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCNBtA76K8EfZJLY/ToNrv8XchH7OGAKbVgD/Q9Uh/Z1XFl4YfCGqxtEOYE3YOkiZQgnuAiqpvZLheBK8cNUDkLX6EiMEhbUTRrl0paPgwTLhcuhtwUimyNcZ7ccT7K9bRrvsxvEJsS6NvR+CgQ36Cfmh+QH2+Ncuaeh2VY+1JHMpESf8V7OosEl3OuLgvuvZ+n5mFNMjOnzJEp6q/yUXQesMk/LO/K1p/qfQ7iXr3aybyQjcposdKIRhglnmIG7kzRkMfBFRsdNqb/r5TKZrtD7vUEEUGnenfBiLTf16gPJFRTVEsKDuC/OwoFX51mP6+6RSjlF36DN7Is9CGPijSCaBkSmQfASeJ9kFt5JbRgc3y16GrFdI2Qshw9rg99pZ0LlGaYD4ZxcauNV6sym0WuxmC60egB43gdUDRlVjoHwr6ln8TAKIWIN7/G7QweVqVIIvLVO7Jzgk+5NsJjYwD00W1MKyvOCmq7j/+k64237LiFdtDVhGa9zmRZ/o5hHPE= rj@kali"
     ],
     "templates": {
-        "al2": {
-            "user": "ec2-user",
+        "ubuntu-20": {
+            "README": "This should always work",
+            "user": "ubuntu",
             "password": "password1!",
-            "img_url": "https://cdn.amazonlinux.com/os-images/2.0.20230320.0/kvm/amzn2-kvm-2.0.20230320.0-x86_64.xfs.gpt.qcow2"
+            "img_url": "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img"
+        },
+        "ubuntu-22": {
+            "README": "This should always work",
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
+        },
+        "ubuntu-24": {
+            "README": "This should always work",
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+        },
+        "ubuntu-20-oldest": {
+            "README": "This might break since it is old af",
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "http://cloud-images-archive.ubuntu.com/releases/focal/release-20200423/ubuntu-20.04-server-cloudimg-amd64.img"
+        },
+        "ubuntu-22-oldest": {
+            "README": "This might break since it is old af",
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "https://cloud-images.ubuntu.com/releases/22.04/release-20221101.1/ubuntu-22.04-server-cloudimg-amd64.img"
+        },
+        "ubuntu-24-oldest": {
+            "README": "This might break since it is old af",
+            "user": "ubuntu",
+            "password": "password1!",
+            "img_url": "https://cloud-images.ubuntu.com/releases/24.04/release-20240423/ubuntu-24.04-server-cloudimg-amd64.img"
         }
     }
 }
